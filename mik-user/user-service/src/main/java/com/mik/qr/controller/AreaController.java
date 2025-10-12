@@ -8,6 +8,7 @@ import com.mik.core.pojo.PageResult;
 import com.mik.core.pojo.Result;
 import com.mik.file.config.StaticResourceConfigure;
 import com.mik.qr.controller.dto.AreaCreateInput;
+import com.mik.qr.controller.dto.AreaListInput;
 import com.mik.qr.controller.dto.AreaListOutput;
 import com.mik.qr.entity.AreaEntity;
 import com.mik.qr.service.AreaService;
@@ -19,6 +20,7 @@ import com.mybatisflex.core.query.QueryCondition;
 import com.mybatisflex.core.query.QueryWrapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -105,10 +107,17 @@ public class AreaController {
     }
 
     @PostMapping("listAreaPage")
-    public Result<PageResult<AreaListOutput>> listAreaPage(String keyword, PageInput page) {
+    public Result<PageResult<AreaListOutput>> listAreaPage(AreaListInput input, PageInput page) {
         Page<AreaEntity> paginate = Page.of(page.getPageNum(), page.getPageSize());
-//        QueryCondition condition =  QueryCondition.create(new QueryColumn("area"), "like", "%" + keyword + "%");
-        QueryWrapper wrapper = QueryWrapper.create().select().from("area");
+        QueryCondition condition =  QueryCondition.createEmpty();
+        if (StringUtils.isNotBlank(input.getArea())){
+            condition.and(QueryCondition.create(new QueryColumn("area"), "like", "%" + input.getArea() + "%"));
+        }
+        if(input.getStartTime() != null&& input.getEndTime() != null){
+            condition.and(QueryCondition.create(new QueryColumn("create_time"), ">=", input.getStartTime()));
+            condition.and(QueryCondition.create(new QueryColumn("create_time"), "<=", input.getEndTime()));
+        }
+        QueryWrapper wrapper = QueryWrapper.create().select().from("area").where(condition);
 
         Page<AreaEntity> userListDTOS = staffService.getMapper().paginateAs(paginate, wrapper, AreaEntity.class);
         Page<AreaListOutput> dtoPage = userListDTOS.map(x -> {
