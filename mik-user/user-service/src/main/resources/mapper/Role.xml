@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mik.user.mapper.RoleMapper">
+
+    <resultMap id="RoleDTOMap" type="com.mik.user.controller.cqe.RoleDTO">
+        <id property="roleId" column="role_id"/>
+        <result property="roleName" column="role_name"/>
+        <result property="createTime" column="create_time"/>
+        <collection property="permissions" ofType="java.lang.Long" javaType="java.util.ArrayList">
+            <result column="role_id"/>
+        </collection>
+    </resultMap>
+
+
+    <select id="listUserRoles" resultMap="RoleDTOMap" parameterType="java.lang.Long">
+        SELECT r.role_id, r.role_name, r.create_time
+        FROM user_role ur
+                 LEFT JOIN role r ON ur.role_id = r.role_id
+        WHERE ur.user_id = #{userId}
+    </select>
+
+</mapper>

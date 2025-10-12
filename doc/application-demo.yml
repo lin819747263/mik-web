@@ -1,0 +1,39 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/user?serverTimezone=GMT%2B8&useSSL=true
+    username: root
+    password: root
+  cloud:
+    openfeign:
+      compression:
+        request:
+          enabled: true
+          mime-types: text/xml,application/xml, application/json  # 压缩类型
+          min-request-size: 1024  # 最小压缩值标准，当数据大于 1024 才会进行压缩
+        response:
+          enabled: true
+      okhttp:
+        enabled: true
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
+server:
+  port: ${random.int(2000,8000)}
+
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: user_router
+          uri: lb://admin-service
+          predicates:
+            - Path=/u/**
+          filters:
+            #            - PrefixPath=/u
+            - StripPrefix=1
+

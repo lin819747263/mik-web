@@ -1,0 +1,16 @@
+spring:
+  cloud:
+    stream:
+      bindings:
+        send-out-0:
+          destination: my-topic
+        receive-in-0:
+          binder: kafka
+          group: mik666
+          destination: my-topic
+      kafka:
+        binder:
+          brokers: 192.168.68.118:9092,192.168.68.118:9093,192.168.68.118:9094
+      default-binder: kafka
+    function:
+      definition: receive

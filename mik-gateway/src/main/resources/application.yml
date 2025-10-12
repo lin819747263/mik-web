@@ -1,0 +1,16 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: user_router
+          uri: lb://admin-service
+          predicates:
+            - Path=/u/**
+          filters:
+#            - PrefixPath=/u
+            - StripPrefix=1
+  data:
+    redis:
+      host: 192.168.69.209
+      password: swGUBqpw@Sg8
+      database: 6

@@ -1,0 +1,27 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.1.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.0
+                              http://maven.apache.org/xsd/assembly-2.1.0.xsd">
+    <id>src</id>
+    <formats>
+        <format>zip</format> <!-- 或 tar.gz -->
+    </formats>
+    <includeBaseDirectory>true</includeBaseDirectory>
+    <baseDirectory>${project.artifactId}-${project.version}</baseDirectory>
+
+    <!-- 包含父项目下的所有文件（除 target） -->
+    <fileSets>
+        <!-- 父项目根目录（除 target 和 .git 等） -->
+        <fileSet>
+            <directory>${project.basedir}</directory>
+            <outputDirectory>/</outputDirectory>
+            <excludes>
+                <exclude>**/target/**</exclude>
+                <exclude>**/.git/**</exclude>
+                <exclude>**/.idea/**</exclude>
+                <exclude>**/*.iml</exclude>
+                <exclude>**/dependency-reduced-pom.xml</exclude>
+            </excludes>
+        </fileSet>
+    </fileSets>
+</assembly>

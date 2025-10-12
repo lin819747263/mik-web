@@ -1,0 +1,9 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.65.121:3306/xxl?serverTimezone=GMT%2B8&useSSL=true
+    username: root
+    password: satellite

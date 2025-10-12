@@ -1,0 +1,43 @@
+server:
+  port: 8080
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: auth_router
+          uri: lb://auth-service
+          predicates:
+            - Path=/auth/**
+          filters:
+            - StripPrefix=1
+        - id: user_router
+          uri: lb://user-service
+          predicates:
+            - Path=/uc/**
+          filters:
+            - StripPrefix=1
+        - id: admin_router
+          uri: lb://admin-service
+          predicates:
+            - Path=/admin/**
+          filters:
+            - StripPrefix=1
+
+knife4j:
+  # 聚合swagger文档
+  gateway:
+    enable: true
+    routes:
+      - name: 用户服务
+        url: /uc/v3/api-docs?group=default
+        service-name: user-service
+        order: 2
+
+white:
+  urls: /api/login,/api/register
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: DEBUG
+    com.mik.user.api: DEBUG

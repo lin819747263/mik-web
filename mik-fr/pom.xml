@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>springcloud-lab</artifactId>
+        <groupId>com.mik</groupId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>mik-fr</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>mik-fr-core</module>
+        <module>mik-fr-db</module>
+        <module>mik-fr-mvc</module>
+        <module>mik-fr-openfegin</module>
+        <module>mik-fr-client</module>
+        <module>mik-mr-ws</module>
+        <module>mik-fr-mq</module>
+        <module>mik-kafka</module>
+        <module>mik-fr-redis</module>
+        <module>mik-fr-security</module>
+        <module>mik-fr-excel</module>
+    </modules>
+
+
+</project>
