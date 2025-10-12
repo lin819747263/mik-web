@@ -1,4 +1,4 @@
-package com.mik.user.utils;
+package com.mik.db.entity.utils;
 
 import com.mik.core.pojo.PageResult;
 import com.mybatisflex.core.paginate.Page;

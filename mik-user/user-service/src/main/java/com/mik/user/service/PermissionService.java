@@ -8,7 +8,7 @@ import com.mik.user.controller.cqe.PermissionQuery;
 import com.mik.user.entity.Permission;
 import com.mik.user.mapper.PermissionMapper;
 import com.mik.user.mapper.RolePermissionMapper;
-import com.mik.user.utils.PageUtil;
+import com.mik.db.entity.utils.PageUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryColumn;
 import com.mybatisflex.core.query.QueryCondition;

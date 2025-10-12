@@ -12,7 +12,7 @@ import com.mik.user.entity.User;
 import com.mik.user.entity.UserRole;
 import com.mik.user.mapper.UserMapper;
 import com.mik.user.mapper.UserRoleMapper;
-import com.mik.user.utils.PageUtil;
+import com.mik.db.entity.utils.PageUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryColumn;
 import com.mybatisflex.core.query.QueryCondition;

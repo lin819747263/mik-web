@@ -13,7 +13,7 @@ import com.mik.qr.controller.dto.AreaListOutput;
 import com.mik.qr.entity.AreaEntity;
 import com.mik.qr.service.AreaService;
 import com.mik.qr.service.StaffService;
-import com.mik.user.utils.PageUtil;
+import com.mik.db.entity.utils.PageUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryColumn;
 import com.mybatisflex.core.query.QueryCondition;
