@@ -1,5 +1,6 @@
 package com.mik.security.provider;
 
+import com.mik.core.exception.ServiceException;
 import com.mik.security.UserInfo;
 import com.mik.security.service.UserDetailService;
 import com.mik.security.token.UsernamePasswordToken;
@@ -34,12 +35,14 @@ public class UsernameAndPasswordProvider implements AuthenticationProvider {
         if (userInfo == null) {
             throw new UsernameNotFoundException("用户不存在");
         }
-
         if(StringUtils.isBlank(username) || StringUtils.isBlank(password)){
             throw new UsernameNotFoundException("用户名或者密码错误");
         }
         if(!encoder.matches(password, userInfo.getPassword())){
             throw new BadCredentialsException("用户名或者密码错误");
+        }
+        if(!userInfo.isEnabled()){
+            throw new UsernameNotFoundException("用户名被禁用");
         }
         token.setDetails(userInfo);
 

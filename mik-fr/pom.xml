@@ -24,6 +24,7 @@
         <module>mik-fr-redis</module>
         <module>mik-fr-security</module>
         <module>mik-fr-excel</module>
+        <module>mik-fr-sys</module>
     </modules>
 
 

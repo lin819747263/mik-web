@@ -48,7 +48,14 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
 
     public PageResult<UserListDTO> listByConditionPage(UserQuery query, PageInput page){
         Page<User> paginate = Page.of(page.getPageNum(), page.getPageSize());
-        QueryCondition condition =  QueryCondition.create(new QueryColumn("username"), "like", "%" + query.getUsername() + "%");
+        QueryCondition condition =  QueryCondition.createEmpty();
+        if(StringUtils.isNotBlank(query.getUsername())){
+            condition.and(QueryCondition.create(new QueryColumn("username"), "like", "%" + query.getUsername() + "%"));
+        }
+        if(query.getStartTime() != null && query.getEndTime() != null) {
+            condition.and(QueryCondition.create(new QueryColumn("create_time"), ">=", query.getStartTime()));
+            condition.and(QueryCondition.create(new QueryColumn("create_time"), "<=", query.getEndTime()));
+        }
         QueryWrapper wrapper = QueryWrapper.create().select().from("user").where(condition);
 
         Page<User> userListDTOS = userMapper.paginateAs(paginate, wrapper, User.class);

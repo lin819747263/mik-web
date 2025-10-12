@@ -10,6 +10,7 @@ import java.util.List;
 public class UserInfo implements UserDetails {
     private String username;
     private String password;
+    private Boolean enabled;
     private List<SimpleGrantedAuthority> authorities;
 
     @Override
@@ -44,7 +45,7 @@ public class UserInfo implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 
     public void setUsername(String username) {
@@ -53,6 +54,10 @@ public class UserInfo implements UserDetails {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
     }
 
     public void setAuthorities(List<SimpleGrantedAuthority> authorities) {
