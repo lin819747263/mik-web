@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+
+    <!-- *********数据库表结构、索引********* -->
+    <include file="classpath:db/changelog/tables/table-master.xml"/>
+    <!-- *********初始化数据，要放到表结构之后执行********* -->
+    <!--    <include file="classpath:db/changelog/data/data-master.xml"/>-->
+</databaseChangeLog>

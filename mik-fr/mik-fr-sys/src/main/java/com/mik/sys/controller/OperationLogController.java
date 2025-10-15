@@ -37,7 +37,7 @@ public class OperationLogController {
             condition.and(QueryCondition.create(new QueryColumn("create_time"), ">=", input.getStartTime()));
             condition.and(QueryCondition.create(new QueryColumn("create_time"), "<=", input.getEndTime()));
         }
-        QueryWrapper wrapper = QueryWrapper.create().select().from("area").where(condition);
+        QueryWrapper wrapper = QueryWrapper.create().select().from("operation_log").where(condition);
 
         Page<OperationLogEntity> userListDTOS = operationService.getMapper().paginateAs(paginate, wrapper, OperationLogEntity.class);
         Page<OperationLogOutput> dtoPage = userListDTOS.map(x -> {

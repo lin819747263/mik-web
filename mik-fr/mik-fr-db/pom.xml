@@ -29,6 +29,10 @@
             <groupId>com.mik</groupId>
             <artifactId>mik-fr-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

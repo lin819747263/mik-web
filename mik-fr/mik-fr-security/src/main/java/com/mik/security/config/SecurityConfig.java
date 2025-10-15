@@ -1,12 +1,16 @@
 package com.mik.security.config;
 
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.mik.client.WhiteListProperties;
 import com.mik.client.filter.AuthorFilter;
 import com.mik.core.constant.CommonConstant;
 import com.mik.core.pojo.Result;
 import com.mik.core.util.HttpServletUtil;
+import com.mik.core.util.ObjectMapper;
 import com.mik.exception.SecurityConstant;
+import com.mik.security.UserInfo;
 import com.mik.security.filter.SmsLoginFilter;
 import com.mik.security.filter.UsernamePasswordFilter;
 import com.mik.security.provider.SmsProvider;
@@ -18,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,12 +32,14 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class SecurityConfig {
@@ -47,6 +54,8 @@ public class SecurityConfig {
     UsernameAndPasswordProvider usernameAndPasswordProvider;
     @Autowired
     WhiteListProperties whiteListProperties;
+    @Autowired
+    RedisTemplate redisTemplate;
 
 
     @Bean
@@ -121,8 +130,14 @@ public class SecurityConfig {
     public AuthenticationSuccessHandler successHandler() {
         return (request, response, authentication) -> {
             JSONObject jsonObject = new JSONObject();
-            String mobile = authentication.getPrincipal().toString();
-            jsonObject.put(CommonConstant.AUTH_HEADER, sign(mobile));
+            UserInfo details = (UserInfo) authentication.getDetails();
+            long random = System.currentTimeMillis() + new Random(100).nextInt();
+            String hash = DigestUtils.md5DigestAsHex(Long.toString(random).getBytes(StandardCharsets.UTF_8));
+
+            String token = sign(hash, details.getUserId().toString());
+            jsonObject.put(CommonConstant.AUTH_HEADER, token);
+            redisTemplate.opsForValue().set(StrUtil.format("Auth:{}:{}",details.getUserId(), hash), token , 3, TimeUnit.HOURS);
+            redisTemplate.opsForValue().set(StrUtil.format("info:{}",details.getUserId()), JSON.toJSONString(details));
             HttpServletUtil.writeData(response, Result.success(jsonObject));
         };
     }
@@ -137,11 +152,12 @@ public class SecurityConfig {
     }
 
 
-    public String sign(String username){
+    public String sign(String hash,String userId){
         Map<String, Object> claims = new HashMap<>();
 
-        claims.put("sub", username);
+        claims.put("sub", userId);
         claims.put("iat", new Date());
+        claims.put("hash", hash);
 
         // 设置签名的秘钥
         String secretKey = Base64.getEncoder().encodeToString("mik".getBytes(StandardCharsets.UTF_8)) ;

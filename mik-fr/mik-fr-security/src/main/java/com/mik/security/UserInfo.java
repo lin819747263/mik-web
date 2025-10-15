@@ -1,5 +1,6 @@
 package com.mik.security;
 
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -8,6 +9,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class UserInfo implements UserDetails {
+    @Getter
+    private Long userId;
     private String username;
     private String password;
     private Boolean enabled;
@@ -62,5 +65,9 @@ public class UserInfo implements UserDetails {
 
     public void setAuthorities(List<SimpleGrantedAuthority> authorities) {
         this.authorities = authorities;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 }

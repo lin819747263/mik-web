@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="#operation@create#table@sys_setting#time@2018-12-20" author="linguoshuai" labels="mik">
+        <preConditions onFail="MARK_RAN" onErrorMessage="表sys_setting已存在,不需要创建">
+            <not>
+                <tableExists tableName="sys_setting"/>
+            </not>
+        </preConditions>
+        <sql>
+            CREATE TABLE `sys_setting` (
+                                           `setting_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+                                           `sys_name` varchar(255) DEFAULT NULL COMMENT '系统名称',
+                                           `logo_url` varchar(500) DEFAULT NULL COMMENT 'Logo图片URL',
+                                           `login_url` varchar(500) DEFAULT NULL COMMENT '登录页背景图URL',
+                                           `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                           `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                           PRIMARY KEY (`setting_id`)
+            ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COMMENT='系统设置表';
+        </sql>
+    </changeSet>
+</databaseChangeLog>

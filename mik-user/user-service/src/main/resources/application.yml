@@ -30,6 +30,9 @@ spring:
     admin:
       client:
         url: http://localhost:8085
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
 
 file-path:
   path: D:/file/
@@ -54,6 +57,7 @@ mik:
       - "/favicon.ico"
       - "/upload/**"
       - "/area/getAreaByUid"
+      - "/file/upload"
 
 # knife4j的增强配置，不需要增强可以不配
 knife4j:

@@ -37,6 +37,10 @@
             <groupId>com.mik</groupId>
             <artifactId>platform-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.mik</groupId>
+            <artifactId>mik-fr-redis</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

@@ -1,11 +1,11 @@
 package com.mik.file.service;
 
-import java.io.InputStream;
+import com.mik.file.FileOutput;
+import org.springframework.web.multipart.MultipartFile;
+
 
 public interface FileService {
 
-    String upload(String fileName, InputStream inputStream, Boolean rename);
-
-    String batchUpload(String fileName, InputStream inputStream, Boolean rename);
+    FileOutput upload(MultipartFile file, String path, Boolean rename);
 
 }

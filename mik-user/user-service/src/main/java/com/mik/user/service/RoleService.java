@@ -62,6 +62,18 @@ public class RoleService extends ServiceImpl<RoleMapper, Role> {
     }
 
     public void create(RoleCreateCommand command) {
+        if(command.getRoleId() == null){
+            Role role1 = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("role_name"), "=", command.getRoleName()));
+            if(role1 != null){
+                throw new ServiceException("角色名称已存在");
+            }
+        }else if(command.getRoleId() != null){
+            Role role1 = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("role_name"), "=", command.getRoleName()));
+            if(role1 != null && !role1.getRoleId().equals(command.getRoleId())){
+                throw new ServiceException("角色名称已存在");
+            }
+        }
+
         Role role = new Role();
         BeanUtils.copyProperties(command, role);
         saveOrUpdate(role);

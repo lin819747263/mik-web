@@ -1,4 +1,4 @@
-package com.mik.mvc;
+package com.mik.core.util;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;

@@ -46,6 +46,17 @@ public class PermissionService extends ServiceImpl<PermissionMapper, Permission>
     }
 
     public void create(PermissionCreateCommand command) {
+        if(command.getPId() == null){
+            Permission permission = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("code"), "=", command.getCode()));
+            if(permission != null){
+                throw new RuntimeException("权限编码已存在");
+            }
+        }else if(command.getParent() != null){
+            Permission permission = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("code"), "=", command.getCode()));
+            if(permission != null && permission.getPId().equals(command.getPId())){
+                throw new RuntimeException("权限编码已存在");
+            }
+        }
         Permission permission = new Permission();
         BeanUtils.copyProperties(command, permission);
         saveOrUpdate(permission);

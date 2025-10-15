@@ -8,6 +8,7 @@ import com.mik.user.dto.UserCreateDTO;
 import com.mik.user.dto.UserDTO;
 import com.mik.user.dto.UserListDTO;
 import com.mik.user.dto.UserQuery;
+import com.mik.user.entity.Permission;
 import com.mik.user.entity.User;
 import com.mik.user.entity.UserRole;
 import com.mik.user.mapper.UserMapper;
@@ -98,7 +99,10 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
     }
 
     public void createUser(UserCreateDTO createDTO) {
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        checkUsername(createDTO);
+        checkMobile(createDTO);
+        checkEmail(createDTO);
+
         User user = new User();
         if(createDTO.getUserId() != null){
             user.setUserId(createDTO.getUserId());
@@ -123,6 +127,57 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
             });
         }
         userRoleMapper.insertBatch(userRoles);
+    }
+
+    private void checkEmail(UserCreateDTO createDTO) {
+        if(StringUtils.isBlank(createDTO.getEmail())){
+            return;
+        }
+        if(createDTO.getUserId() == null){
+            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn(",email"), "=", createDTO.getEmail()));
+            if(user != null){
+                throw new RuntimeException("邮箱已存在");
+            }
+        }else{
+            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("email"), "=", createDTO.getEmail()));
+            if(user != null && user.getUserId().equals(createDTO.getUserId())){
+                throw new RuntimeException("邮箱已存在");
+            }
+        }
+    }
+
+    private void checkMobile(UserCreateDTO createDTO) {
+        if(StringUtils.isBlank(createDTO.getMobile())){
+            return;
+        }
+        if(createDTO.getUserId() == null){
+            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn(",mobile"), "=", createDTO.getMobile()));
+            if(user != null){
+                throw new RuntimeException("手机号已存在");
+            }
+        }else{
+            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("mobile"), "=", createDTO.getMobile()));
+            if(user != null && user.getUserId().equals(createDTO.getUserId())){
+                throw new RuntimeException("手机号已存在");
+            }
+        }
+    }
+
+    private void checkUsername(UserCreateDTO createDTO) {
+        if(StringUtils.isBlank(createDTO.getUsername())){
+            return;
+        }
+        if(createDTO.getUserId() == null){
+            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("username"), "=", createDTO.getUsername()));
+            if(user != null){
+                throw new RuntimeException("用户名已存在");
+            }
+        }else{
+            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("username"), "=", createDTO.getUsername()));
+            if(user != null && user.getUserId().equals(createDTO.getUserId())){
+                throw new RuntimeException("用户名已存在");
+            }
+        }
     }
 
     public void delUser(Long userId) {

@@ -1,20 +1,28 @@
 package com.mik.client.filter;
 
 
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
 import com.mik.client.UserInfoToken;
 import com.mik.client.WhiteListProperties;
 import com.mik.core.constant.CommonConstant;
+import com.mik.core.exception.ServiceException;
 import com.mik.core.pojo.Result;
+import com.mik.core.user.UserInfo;
 import com.mik.core.util.HttpServletUtil;
+import com.mik.core.util.SpringUtil;
 import com.mik.exception.SecurityConstant;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.AntPathMatcher;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -50,7 +58,6 @@ public class AuthorFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        System.out.println(request.getRequestURI());
         if(isWhiteListPath(request.getRequestURI())){
             filterChain.doFilter(request, response);
             return;
@@ -64,23 +71,29 @@ public class AuthorFilter extends OncePerRequestFilter {
 
         try {
             String secretKey = Base64.getEncoder().encodeToString("mik".getBytes(StandardCharsets.UTF_8)) ;
-            String username = Jwts.parser()
+            Claims body = Jwts.parser()
                     .setSigningKey(secretKey)
                     .parseClaimsJws(authHeader)
-                    .getBody()
-                    .getSubject();
+                    .getBody();
+            String userId = body.getSubject();
+            String hash = body.get("hash").toString();
+            RedisTemplate redisTemplate = SpringUtil.getBean("redisTemplate", RedisTemplate.class);
 
+            Object o = redisTemplate.opsForValue().get(StrUtil.format("Auth:{}:{}",userId, hash));
 
-            String tokenId = Jwts.parser()
-                    .setSigningKey(secretKey)
-                    .parseClaimsJws(authHeader)
-                    .getBody()
-                    .getId();
+            if(o== null){
+                throw new ServiceException(SecurityConstant.AUTH_ERROR);
+            }
+            if(!o.toString().equals(authHeader)){
+                throw new ServiceException(SecurityConstant.AUTH_ERROR);
+            }
 
-
-            UserInfoToken token = new UserInfoToken(new ArrayList<>(), username, tokenId);
+            Object o1 = redisTemplate.opsForValue().get(StrUtil.format("info:{}", userId));
+            UserInfo userInfo = JSON.parseObject(o1.toString(), UserInfo.class);
+            UserInfoToken token = new UserInfoToken(new ArrayList<>(), userId, null);
             token.setAuthenticated(true);
-            token.setDetails(null);
+            userInfo.setPassword("");
+            token.setDetails(userInfo);
             SecurityContextHolder.getContext().setAuthentication(token);
         }catch (Exception e){
             HttpServletUtil.writeData(response, Result.error(SecurityConstant.AUTH_ERROR));

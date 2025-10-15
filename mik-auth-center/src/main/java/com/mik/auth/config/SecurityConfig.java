@@ -7,6 +7,7 @@ import com.mik.auth.filter.UsernamePasswordFilter;
 import com.mik.auth.provider.SmsProvider;
 import com.mik.auth.provider.UsernameAndPasswordProvider;
 import com.mik.auth.service.UserDetailService;
+import com.mik.client.WhiteListProperties;
 import com.mik.client.filter.AuthorFilter;
 import com.mik.core.constant.CommonConstant;
 import com.mik.core.pojo.Result;
@@ -42,6 +43,9 @@ public class SecurityConfig {
     SmsProvider smsProvider;
     @Autowired
     UsernameAndPasswordProvider usernameAndPasswordProvider;
+
+    @Autowired
+    WhiteListProperties whiteListProperties;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -89,7 +93,7 @@ public class SecurityConfig {
                             .requestMatchers("/login","/sms/login").permitAll()
                             .anyRequest().authenticated();
                 }).csrf(AbstractHttpConfigurer::disable)
-                .addFilterBefore(new AuthorFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new AuthorFilter(whiteListProperties), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(smsAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(usernamePasswordFilter1, UsernamePasswordAuthenticationFilter.class)
                 .cors(AbstractHttpConfigurer::disable);

@@ -32,6 +32,7 @@ public class UserDetailService implements UserDetailsService {
         }
 
         UserInfo userInfo = new UserInfo();
+        userInfo.setUserId(dto.getUserId());
         userInfo.setUsername(dto.getUsername());
         userInfo.setPassword(dto.getPassword());
         userInfo.setEnabled(dto.getEnable() == 1);
