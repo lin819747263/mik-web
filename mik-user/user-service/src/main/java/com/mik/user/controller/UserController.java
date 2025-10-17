@@ -76,6 +76,12 @@ public class UserController {
         return Result.success(userService.getUserById(userId));
     }
 
+    @GetMapping("/getUserInfo")
+    public Result getUserInfo() {
+        UserInfo userInfo = (UserInfo)SecurityContextHolder.getContext().getAuthentication().getDetails();
+        return Result.success(userService.getUserById(userInfo.getUserId()));
+    }
+
     @GetMapping("/getUserByIdentify")
     public UserInfo getUserByIdentify(String identify) {
         return userService.getUserByIdentify(identify);
@@ -87,8 +93,9 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    public Result logout(Long userId){
-        String pattern = StrUtil.format("Auth:{}:*", userId);
+    public Result logout(){
+        UserInfo userInfo = (UserInfo)SecurityContextHolder.getContext().getAuthentication().getDetails();
+        String pattern = StrUtil.format("Auth:{}:*", userInfo.getUserId());
         deleteKeysByPattern(pattern);
         return Result.success();
     }

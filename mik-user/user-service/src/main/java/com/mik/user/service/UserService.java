@@ -134,7 +134,7 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
             return;
         }
         if(createDTO.getUserId() == null){
-            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn(",email"), "=", createDTO.getEmail()));
+            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("email"), "=", createDTO.getEmail()));
             if(user != null){
                 throw new RuntimeException("邮箱已存在");
             }
@@ -151,7 +151,7 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
             return;
         }
         if(createDTO.getUserId() == null){
-            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn(",mobile"), "=", createDTO.getMobile()));
+            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("mobile"), "=", createDTO.getMobile()));
             if(user != null){
                 throw new RuntimeException("手机号已存在");
             }
