@@ -10,16 +10,21 @@ import com.mik.file.config.StaticResourceConfigure;
 import com.mik.qr.controller.dto.AreaCreateInput;
 import com.mik.qr.controller.dto.AreaListInput;
 import com.mik.qr.controller.dto.AreaListOutput;
+import com.mik.qr.controller.dto.HisAreaListOutput;
 import com.mik.qr.entity.AreaEntity;
+import com.mik.qr.entity.HisAreaEntity;
 import com.mik.qr.service.AreaService;
+import com.mik.qr.service.HisAreaService;
 import com.mik.qr.service.StaffService;
 import com.mik.db.entity.utils.PageUtil;
+import com.mik.user.mapper.UserMapper;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryColumn;
 import com.mybatisflex.core.query.QueryCondition;
 import com.mybatisflex.core.query.QueryWrapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +34,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Validated
 @RestController
@@ -38,6 +45,10 @@ public class AreaController {
 
     @Autowired
     private AreaService areaService;
+    @Autowired
+    private UserMapper userMapper;
+    @Autowired
+    private HisAreaService hisAreaService;
     @Autowired
     private StaffService staffService;
     @Value("${qr.path}")
@@ -59,6 +70,9 @@ public class AreaController {
         BeanUtils.copyProperties(input, role);
 
         areaService.saveOrUpdate(role);
+        input.setAreaId(role.getAreaId());
+        hisAreaService.record(input);
+
         return Result.success();
     }
 
@@ -126,6 +140,22 @@ public class AreaController {
             return roleDTO;
         });
         return Result.success(PageUtil.transform(dtoPage));
+    }
+
+    @PostMapping("listHisAreaPage")
+    public Result<List<HisAreaListOutput>> listHisAreaPage(Long areaId) {
+        QueryCondition condition =  QueryCondition.create(new QueryColumn("area_id"), "=", areaId);
+        QueryWrapper wrapper = QueryWrapper.create().select().from("his_area").where(condition);
+        List<HisAreaEntity> list = hisAreaService.list(wrapper);
+
+        List<HisAreaListOutput> dtoPage = list.stream().map(x -> {
+            HisAreaListOutput roleDTO = new HisAreaListOutput();
+            BeanUtils.copyProperties(x, roleDTO);
+
+            roleDTO.setUserName(userMapper.selectOneById(x.getUserId()).getUsername());
+            return roleDTO;
+        }).collect(Collectors.toList());
+        return Result.success(dtoPage);
     }
 
 }

@@ -5,6 +5,7 @@ import com.mik.core.exception.ServiceException;
 import com.mik.core.pojo.PageInput;
 import com.mik.core.pojo.Result;
 import com.mik.core.user.UserInfo;
+import com.mik.security.UserContext;
 import com.mik.sys.OperationLog;
 import com.mik.user.controller.cqe.UserRegisterInput;
 import com.mik.user.dto.UserCreateDTO;
@@ -78,8 +79,7 @@ public class UserController {
 
     @GetMapping("/getUserInfo")
     public Result getUserInfo() {
-        UserInfo userInfo = (UserInfo)SecurityContextHolder.getContext().getAuthentication().getDetails();
-        return Result.success(userService.getUserById(userInfo.getUserId()));
+        return Result.success(userService.getUserById(UserContext.getUserId()));
     }
 
     @GetMapping("/getUserByIdentify")
@@ -94,8 +94,7 @@ public class UserController {
 
     @PostMapping("/logout")
     public Result logout(){
-        UserInfo userInfo = (UserInfo)SecurityContextHolder.getContext().getAuthentication().getDetails();
-        String pattern = StrUtil.format("Auth:{}:*", userInfo.getUserId());
+        String pattern = StrUtil.format("Auth:{}:*", UserContext.getUserId());
         deleteKeysByPattern(pattern);
         return Result.success();
     }
