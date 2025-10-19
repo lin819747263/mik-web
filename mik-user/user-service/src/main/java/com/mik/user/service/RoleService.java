@@ -112,5 +112,8 @@ public class RoleService extends ServiceImpl<RoleMapper, Role> {
         }
         Set<Long> set = Arrays.stream(ids.split(",")).map(Long::valueOf).collect(Collectors.toSet());
         roleMapper.deleteBatchByIds(set);
+        set.forEach(roleId -> {
+            rolePermissionMapper.deleteByCondition(QueryCondition.create(new QueryColumn("role_id"), "=", roleId));
+        });
     }
 }
