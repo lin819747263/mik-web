@@ -9,7 +9,7 @@ public class UserContext {
         try {
             return  (com.mik.core.user.UserInfo) SecurityContextHolder.getContext().getAuthentication().getDetails();
         }catch (Exception e){
-            return new UserInfo().setUserId(0L);
+            return new UserInfo().setUserId(0L).setUsername("匿名用户");
         }
     }
 
