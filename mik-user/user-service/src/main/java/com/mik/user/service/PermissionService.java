@@ -18,10 +18,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -75,6 +72,7 @@ public class PermissionService extends ServiceImpl<PermissionMapper, Permission>
                 collect.get(x.getParent()).getChildren().add(x);
             }
         });
+        tree.sort(Comparator.comparingInt(PermissionDTO::getSort).reversed());
         return tree;
     }
 

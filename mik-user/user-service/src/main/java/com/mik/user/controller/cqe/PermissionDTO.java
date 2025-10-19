@@ -16,7 +16,7 @@ public class PermissionDTO {
     private String icon;
     private String path;
     private String url;
-    private String sort;
+    private Integer sort;
     private Date createTime;
     private List<PermissionDTO> children = new ArrayList<>();
 }
