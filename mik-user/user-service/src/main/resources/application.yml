@@ -36,7 +36,7 @@ spring:
 
 file-path:
   path: D:/file/
-  url: http://localhost:8081/upload/
+  url: http://192.168.31.96/upload/
 file:
   type: local
 

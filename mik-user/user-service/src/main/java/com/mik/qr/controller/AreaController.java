@@ -22,6 +22,7 @@ import com.mik.user.mapper.UserMapper;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryColumn;
 import com.mybatisflex.core.query.QueryCondition;
+import com.mybatisflex.core.query.QueryOrderBy;
 import com.mybatisflex.core.query.QueryWrapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -148,7 +149,8 @@ public class AreaController {
     @PostMapping("listHisAreaPage")
     public Result<List<HisAreaListOutput>> listHisAreaPage(Long areaId) {
         QueryCondition condition =  QueryCondition.create(new QueryColumn("area_id"), "=", areaId);
-        QueryWrapper wrapper = QueryWrapper.create().select().from("his_area").where(condition);
+        QueryWrapper wrapper = QueryWrapper.create().select().from("his_area").where(condition)
+                .orderBy(new QueryOrderBy(new QueryColumn("create_time"), "DESC"));
         List<HisAreaEntity> list = hisAreaService.list(wrapper);
 
         List<HisAreaListOutput> dtoPage = list.stream().map(x -> {
