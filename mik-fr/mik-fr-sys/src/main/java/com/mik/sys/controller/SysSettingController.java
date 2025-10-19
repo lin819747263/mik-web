@@ -1,6 +1,7 @@
 package com.mik.sys.controller;
 
 import com.mik.core.pojo.Result;
+import com.mik.sys.OperationLog;
 import com.mik.sys.controller.dto.SysSettingInput;
 import com.mik.sys.controller.dto.SysSettingOutput;
 import com.mik.sys.entity.SysSetting;
@@ -20,6 +21,7 @@ public class SysSettingController {
     @Autowired
     SysSettingService sysSettingService;
 
+    @OperationLog(operation = "保存系统设置")
     @PostMapping("saveSetting")
     public Result<Void> saveSetting(SysSettingInput input) {
         SysSetting sysSetting = new SysSetting();

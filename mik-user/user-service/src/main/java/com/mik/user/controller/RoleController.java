@@ -2,6 +2,7 @@ package com.mik.user.controller;
 
 import com.mik.core.pojo.PageInput;
 import com.mik.core.pojo.Result;
+import com.mik.sys.OperationLog;
 import com.mik.user.controller.cqe.RoleCreateCommand;
 import com.mik.user.controller.cqe.RoleQuery;
 import com.mik.user.service.RoleService;
@@ -28,12 +29,14 @@ public class RoleController {
         return Result.success(roleService.getById(roleId));
     }
 
+    @OperationLog(operation = "删除角色")
     @PostMapping("delete")
     public Result del(String ids){
         roleService.deleteRole(ids);
         return Result.success();
     }
 
+    @OperationLog(operation = "创建/编辑角色")
     @PostMapping("create")
     public Result create(RoleCreateCommand command){
         roleService.create(command);

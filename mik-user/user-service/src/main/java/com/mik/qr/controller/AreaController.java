@@ -17,6 +17,7 @@ import com.mik.qr.service.AreaService;
 import com.mik.qr.service.HisAreaService;
 import com.mik.qr.service.StaffService;
 import com.mik.db.entity.utils.PageUtil;
+import com.mik.sys.OperationLog;
 import com.mik.user.mapper.UserMapper;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryColumn;
@@ -57,6 +58,7 @@ public class AreaController {
     @Autowired
     private StaticResourceConfigure staticResourceConfigure;
 
+    @OperationLog(operation = "新增/编辑二维码")
     @PostMapping("createArea")
     public Result createArea(@Valid AreaCreateInput input) {
         AreaEntity role = new AreaEntity();
@@ -86,6 +88,7 @@ public class AreaController {
         return DigestUtil.md5Hex(input).substring(0, 8);
     }
 
+    @OperationLog(operation = "删除二维码")
     @PostMapping("delArea")
     public Result delArea(Long areaId) {
         areaService.removeById(areaId);

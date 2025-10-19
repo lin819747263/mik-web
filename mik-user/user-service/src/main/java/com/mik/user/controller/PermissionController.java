@@ -2,6 +2,7 @@ package com.mik.user.controller;
 
 import com.mik.core.pojo.PageInput;
 import com.mik.core.pojo.Result;
+import com.mik.sys.OperationLog;
 import com.mik.user.controller.cqe.PermissionCreateCommand;
 import com.mik.user.controller.cqe.PermissionDTO;
 import com.mik.user.controller.cqe.PermissionQuery;
@@ -35,6 +36,7 @@ public class PermissionController {
         return Result.success(permissionService.getById(id));
     }
 
+    @OperationLog(operation = "删除菜单")
     @PostMapping("delete")
     public Result del(String ids){
         Set<Long> set = Arrays.stream(ids.split(",")).map(Long::valueOf).collect(Collectors.toSet());
@@ -42,6 +44,7 @@ public class PermissionController {
         return Result.success();
     }
 
+    @OperationLog(operation = "创建/编辑权限")
     @PostMapping("create")
     public Result create(PermissionCreateCommand command){
         permissionService.create(command);

@@ -53,19 +53,21 @@ public class UserController {
     private PasswordEncoder encoder;
 
 
-    @OperationLog(operation = "创建用户")
+    @OperationLog(operation = "创建/编辑用户")
     @PostMapping("/createUser")
     public Result createUser(UserCreateDTO createDTO){
         userService.createUser(createDTO);
         return Result.CREATE_SUCCESS;
     }
 
+    @OperationLog(operation = "删除用户")
     @PostMapping("/delUser")
     public Result delUser(Long userId){
         userService.delUser(userId);
         return Result.DELETE_SUCCESS;
     }
 
+    @OperationLog(operation = "启用/禁用用户")
     @PostMapping("/changeEnable")
     public Result changeEnable(Long userId, Integer enable){
         userService.changeEnable(userId, enable);
@@ -107,6 +109,7 @@ public class UserController {
         return Result.success();
     }
 
+    @OperationLog(operation = "重置密码")
     @PostMapping("/changePassword")
     public Result changePassword(Long userId, String oldPassword, String newPassword){
         User user = userService.getMapper().selectOneById(userId);
@@ -118,6 +121,7 @@ public class UserController {
         return Result.success();
     }
 
+    @OperationLog(operation = "用户注册")
     @PostMapping("/register")
     public Result register(UserRegisterInput  input){
         User user = userService.getMapper().selectOneByCondition(
