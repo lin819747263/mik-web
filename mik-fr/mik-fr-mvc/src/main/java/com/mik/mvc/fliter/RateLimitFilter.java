@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
-@RestController
+//@RestController
 public class RateLimitFilter implements Filter {
 
     // 按IP限流（每IP每秒1个请求）
@@ -29,7 +29,7 @@ public class RateLimitFilter implements Filter {
         String ip = getClientIp(req);
 
         RateLimiter limiter = ipLimiters.computeIfAbsent(ip,
-                k -> RateLimiter.create(5)); // 每IP每秒1个请求
+                k -> RateLimiter.create(10)); // 每IP每秒1个请求
 
         if (!limiter.tryAcquire()) {
             Result<Void> error = Result.error(CommonErrorCode.TooManyRequests);

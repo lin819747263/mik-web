@@ -22,8 +22,9 @@
                                      `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                                      `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                                      `deleted` int NULL DEFAULT 0 COMMENT '是否删除',
-                                     PRIMARY KEY (`area_id`) USING BTREE
-            ) ENGINE = InnoDB AUTO_INCREMENT = 18 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '区域信息表' ROW_FORMAT = Dynamic;
+                                     PRIMARY KEY (`area_id`) USING BTREE,
+                                     UNIQUE INDEX `唯一索引`(`uid` ASC) USING BTREE
+            ) ENGINE = InnoDB AUTO_INCREMENT = 19 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '区域信息表' ROW_FORMAT = DYNAMIC;
         </sql>
     </changeSet>
 </databaseChangeLog>

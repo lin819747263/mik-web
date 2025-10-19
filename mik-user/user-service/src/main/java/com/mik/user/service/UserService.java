@@ -1,9 +1,12 @@
 package com.mik.user.service;
 
+import cn.hutool.core.util.StrUtil;
 import com.mik.core.pojo.PageInput;
 import com.mik.core.pojo.PageResult;
+import com.mik.core.pojo.Result;
 import com.mik.core.user.UserAuthService;
 import com.mik.core.user.UserInfo;
+import com.mik.security.UserContext;
 import com.mik.user.dto.UserCreateDTO;
 import com.mik.user.dto.UserDTO;
 import com.mik.user.dto.UserListDTO;
@@ -23,6 +26,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -45,6 +51,9 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
 
     @Value("${server.port}")
     private Integer port;
+
+    @Autowired
+    RedisTemplate redisTemplate;
 
 
     public PageResult<UserListDTO> listByConditionPage(UserQuery query, PageInput page){
@@ -140,7 +149,7 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
             }
         }else{
             User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("email"), "=", createDTO.getEmail()));
-            if(user != null && user.getUserId().equals(createDTO.getUserId())){
+            if(user != null && !user.getUserId().equals(createDTO.getUserId())){
                 throw new RuntimeException("邮箱已存在");
             }
         }
@@ -157,7 +166,7 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
             }
         }else{
             User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("mobile"), "=", createDTO.getMobile()));
-            if(user != null && user.getUserId().equals(createDTO.getUserId())){
+            if(user != null && !user.getUserId().equals(createDTO.getUserId())){
                 throw new RuntimeException("手机号已存在");
             }
         }
@@ -174,7 +183,7 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
             }
         }else{
             User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("username"), "=", createDTO.getUsername()));
-            if(user != null && user.getUserId().equals(createDTO.getUserId())){
+            if(user != null && !user.getUserId().equals(createDTO.getUserId())){
                 throw new RuntimeException("用户名已存在");
             }
         }
@@ -182,11 +191,34 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
 
     public void delUser(Long userId) {
         userMapper.deleteById(userId);
+        userRoleMapper.deleteByCondition(QueryCondition.create(new QueryColumn("user_id"), "=", userId));
     }
 
     public void changeEnable(Long userId, Integer enable) {
         User user = userMapper.selectOneWithRelationsById(userId);
         user.setEnable(enable);
         userMapper.update(user);
+    }
+
+    public void logout(){
+        String pattern = StrUtil.format("Auth:{}:*", UserContext.getUserId());
+        deleteKeysByPattern(pattern);
+    }
+
+    public void deleteKeysByPattern(String pattern) {
+        // 使用 SCAN 遍历匹配的 key
+        ScanOptions options = ScanOptions.scanOptions().match(pattern).build();
+        Cursor<String> cursor = redisTemplate.scan(options);
+
+        List<String> keys = new ArrayList<>();
+        while (cursor.hasNext()) {
+            keys.add(cursor.next());
+        }
+        cursor.close();
+
+        // 批量删除
+        if (!keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
     }
 }

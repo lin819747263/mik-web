@@ -71,6 +71,9 @@ public class UserController {
     @PostMapping("/changeEnable")
     public Result changeEnable(Long userId, Integer enable){
         userService.changeEnable(userId, enable);
+        if(enable == 0){
+            userService.logout();
+        }
         return Result.MODIFY_SUCCESS;
     }
 
@@ -96,8 +99,7 @@ public class UserController {
 
     @PostMapping("/logout")
     public Result logout(){
-        String pattern = StrUtil.format("Auth:{}:*", UserContext.getUserId());
-        deleteKeysByPattern(pattern);
+        userService.logout();
         return Result.success();
     }
 
@@ -111,13 +113,14 @@ public class UserController {
 
     @OperationLog(operation = "重置密码")
     @PostMapping("/changePassword")
-    public Result changePassword(Long userId, String oldPassword, String newPassword){
-        User user = userService.getMapper().selectOneById(userId);
+    public Result changePassword(String oldPassword, String newPassword){
+        User user = userService.getMapper().selectOneById(UserContext.getUserId());
         if(!encoder.matches(oldPassword, user.getPassword())){
             throw new ServiceException("旧密码错误");
         }
         user.setPassword(encoder.encode(newPassword));
         userService.saveOrUpdate(user);
+        userService.logout();
         return Result.success();
     }
 
@@ -134,23 +137,6 @@ public class UserController {
         createDTO.setPassword(encoder.encode(input.getPassword()));
         userService.saveOrUpdate(createDTO);
         return Result.success();
-    }
-
-    public void deleteKeysByPattern(String pattern) {
-        // 使用 SCAN 遍历匹配的 key
-        ScanOptions options = ScanOptions.scanOptions().match(pattern).build();
-        Cursor<String> cursor = redisTemplate.scan(options);
-
-        List<String> keys = new ArrayList<>();
-        while (cursor.hasNext()) {
-            keys.add(cursor.next());
-        }
-        cursor.close();
-
-        // 批量删除
-        if (!keys.isEmpty()) {
-            redisTemplate.delete(keys);
-        }
     }
 
 

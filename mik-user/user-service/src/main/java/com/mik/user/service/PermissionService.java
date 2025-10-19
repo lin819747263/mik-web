@@ -53,7 +53,7 @@ public class PermissionService extends ServiceImpl<PermissionMapper, Permission>
             }
         }else if(command.getParent() != null){
             Permission permission = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("code"), "=", command.getCode()));
-            if(permission != null && permission.getPId().equals(command.getPId())){
+            if(permission != null && !permission.getPId().equals(command.getPId())){
                 throw new RuntimeException("权限编码已存在");
             }
         }

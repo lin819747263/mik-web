@@ -29,6 +29,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-aop</artifactId>
-    </dependency>
+        </dependency>
+        <dependency>
+            <groupId>com.mik</groupId>
+            <artifactId>mik-fr-security</artifactId>
+        </dependency>
     </dependencies>
 </project>

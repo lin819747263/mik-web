@@ -2,6 +2,7 @@ package com.mik.sys;
 
 import com.mik.core.pojo.Result;
 import com.mik.core.util.ObjectMapper;
+import com.mik.security.UserContext;
 import com.mik.sys.entity.OperationLogEntity;
 import com.mik.sys.service.OperationService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -51,17 +52,18 @@ public class OperationLogAspect {
 
         Object result = null;
         Throwable ex = null;
+        int res = 0;
 
         try {
             result = pjp.proceed();
             return result;
         } catch (Throwable e) {
+            res = 1;
             ex = e;
             throw e;
         } finally {
             long duration = System.currentTimeMillis() - start;
 
-            int res = 0;
             if (result instanceof Throwable) {
                 res = 1;
             }
@@ -74,7 +76,7 @@ public class OperationLogAspect {
             OperationLogEntity record = OperationLogEntity.builder()
                     .url(requestUrL)
                     .param(getParameter(pjp))
-                    .userId(1L)
+                    .userId(UserContext.getUserId())
                     .operationName(anno.operation())
                     .ip(clientIp)
                     .result(res)
