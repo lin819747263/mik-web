@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="#operation@create#table@user_role#time@2018-12-20" author="linguoshuai" labels="mik">
+        <preConditions onFail="MARK_RAN" onErrorMessage="表user_role已存在,不需要创建">
+            <not>
+                <tableExists tableName="user_role"/>
+            </not>
+        </preConditions>
+        <sql>
+            CREATE TABLE `user_role`  (
+                                          `id` bigint NOT NULL AUTO_INCREMENT,
+                                          `user_id` bigint NOT NULL,
+                                          `role_id` bigint NOT NULL,
+                                          `create_time` datetime NULL DEFAULT NULL,
+                                          `update_time` datetime NULL DEFAULT NULL,
+                                          PRIMARY KEY (`id`) USING BTREE
+            ) ENGINE = InnoDB AUTO_INCREMENT = 28 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = COMPACT;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="#operation@create#table@user#time@2018-12-20" author="linguoshuai" labels="mik">
+        <preConditions onFail="MARK_RAN" onErrorMessage="表user已存在,不需要创建">
+            <not>
+                <tableExists tableName="user"/>
+            </not>
+        </preConditions>
+        <sql>
+            CREATE TABLE `user`  (
+                                     `user_id` bigint NOT NULL AUTO_INCREMENT,
+                                     `username` varchar(64) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+                                     `nickname` varchar(64) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+                                     `mobile` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+                                     `email` varchar(128) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,
+                                     `password` varchar(128) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+                                     `avatar` varchar(128) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT '',
+                                     `sex` tinyint NULL DEFAULT NULL,
+                                     `birthday` datetime NULL DEFAULT NULL,
+                                     `create_time` datetime NULL DEFAULT NULL,
+                                     `update_time` datetime NULL DEFAULT NULL,
+                                     `deleted` int NOT NULL,
+                                     `enable` int NOT NULL,
+                                     PRIMARY KEY (`user_id`) USING BTREE
+            ) ENGINE = InnoDB AUTO_INCREMENT = 48 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = COMPACT;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

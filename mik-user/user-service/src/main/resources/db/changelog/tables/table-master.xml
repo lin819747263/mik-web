@@ -9,4 +9,14 @@
     <include file="classpath:db/changelog/tables/operation_log.xml"/>
     <include file="classpath:db/changelog/tables/sys_setting.xml"/>
 
+    <include file="classpath:db/changelog/tables/user.xml"/>
+    <include file="classpath:db/changelog/tables/user_role.xml"/>
+    <include file="classpath:db/changelog/tables/permission.xml"/>
+    <include file="classpath:db/changelog/tables/role_permission.xml"/>
+    <include file="classpath:db/changelog/tables/role.xml"/>
+
+    <include file="classpath:db/changelog/tables/area.xml"/>
+    <include file="classpath:db/changelog/tables/his_area.xml"/>
+    <include file="classpath:db/changelog/tables/staff.xml"/>
+
 </databaseChangeLog>

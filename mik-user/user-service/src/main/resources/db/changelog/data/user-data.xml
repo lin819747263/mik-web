@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="#operation@init#table@user#time@2018-12-20" author="linguoshuai" labels="mik">
+        <sql>
+            INSERT INTO `user` VALUES (1, 'admin', '', '12222222222', 'admin@163.com', '$2a$10$qDmUbcs2FE5LSNOlXgqezOgLSDMC0IzyghWN0hj0ZGOAZGOma1wmu', '', 1, '2025-01-09 13:52:54', '2025-01-08 17:11:32', '2025-10-18 21:44:21', 0, 1);
+        </sql>
+    </changeSet>
+
+    <changeSet id="#operation@init#table@user-role#time@2018-12-20" author="linguoshuai" labels="mik">
+        <sql>
+            INSERT INTO `user_role` VALUES (1, 1, 1, '2025-01-09 13:54:29', '2025-01-09 13:54:29');
+        </sql>
+    </changeSet>
+</databaseChangeLog>

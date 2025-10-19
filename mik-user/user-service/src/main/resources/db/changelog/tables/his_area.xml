@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="#operation@create#table@his_area#time@2018-12-20" author="linguoshuai" labels="mik">
+        <preConditions onFail="MARK_RAN" onErrorMessage="表his_area已存在,不需要创建">
+            <not>
+                <tableExists tableName="his_area"/>
+            </not>
+        </preConditions>
+        <sql>
+            CREATE TABLE `his_area`  (
+                                         `his_area_id` bigint NOT NULL AUTO_INCREMENT COMMENT '历史区域ID，主键，自增',
+                                         `area_id` bigint NOT NULL COMMENT '区域ID',
+                                         `uid` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '用户UID',
+                                         `user_id` bigint NOT NULL COMMENT '用户ID',
+                                         `area` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '区域',
+                                         `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '内容',
+                                         `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                         `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                         PRIMARY KEY (`his_area_id`) USING BTREE
+            ) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '历史区域表' ROW_FORMAT = Dynamic;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

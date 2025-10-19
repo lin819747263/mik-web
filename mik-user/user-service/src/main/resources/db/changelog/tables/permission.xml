@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="#operation@create#table@permission#time@2018-12-20" author="linguoshuai" labels="mik">
+        <preConditions onFail="MARK_RAN" onErrorMessage="表permission已存在,不需要创建">
+            <not>
+                <tableExists tableName="permission"/>
+            </not>
+        </preConditions>
+        <sql>
+            CREATE TABLE `permission`  (
+                                           `p_id` bigint NOT NULL AUTO_INCREMENT,
+                                           `code` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+                                           `name` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+                                           `type` tinyint NOT NULL,
+                                           `parent` bigint NULL DEFAULT NULL,
+                                           `icon` varchar(40) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT '',
+                                           `path` varchar(128) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT '',
+                                           `url` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,
+                                           `create_time` datetime NULL DEFAULT NULL,
+                                           `update_time` datetime NULL DEFAULT NULL,
+                                           `sort` int NOT NULL,
+                                           PRIMARY KEY (`p_id`) USING BTREE
+            ) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = COMPACT;
+        </sql>
+    </changeSet>
+</databaseChangeLog>
