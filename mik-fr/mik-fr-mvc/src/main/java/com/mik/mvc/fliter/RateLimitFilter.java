@@ -11,15 +11,16 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
-//@RestController
+@RestController
 public class RateLimitFilter implements Filter {
 
-    // 按IP限流（每IP每秒1个请求）
-    private final ConcurrentHashMap<String, RateLimiter> ipLimiters = new ConcurrentHashMap<>();
+    @Autowired
+    private RedisRateLimiter redisRateLimiter;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -27,11 +28,9 @@ public class RateLimitFilter implements Filter {
 
         HttpServletRequest req = (HttpServletRequest) request;
         String ip = getClientIp(req);
+        String key = "rate_limit:" + ip;
 
-        RateLimiter limiter = ipLimiters.computeIfAbsent(ip,
-                k -> RateLimiter.create(10)); // 每IP每秒1个请求
-
-        if (!limiter.tryAcquire()) {
+        if (!redisRateLimiter.isAllowed(key, 30, 10)) { // 1分钟内最多5次
             Result<Void> error = Result.error(CommonErrorCode.TooManyRequests);
             HttpServletUtil.writeData((HttpServletResponse)response, error);
             return;
