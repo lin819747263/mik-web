@@ -3,7 +3,6 @@ package com.mik.qr.controller;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.extra.qrcode.QrCodeUtil;
-import cn.hutool.extra.qrcode.QrConfig;
 import com.mik.core.pojo.PageInput;
 import com.mik.core.pojo.PageResult;
 import com.mik.core.pojo.Result;
@@ -67,7 +66,7 @@ public class AreaController {
         if(input.getAreaId() == null){
             String uid = md5();
             QrCodeUtil.generate(qrPath + uid, 300, 300, FileUtil.file(staticResourceConfigure.getPath() + "qr/" + uid + ".png"));
-            String url = "qr/" + uid + ".png";
+            String url = staticResourceConfigure.getUrl() + "qr/" + uid + ".png";
             role.setUid(uid);
             role.setQrUrl(url);
         }
@@ -110,7 +109,6 @@ public class AreaController {
         AreaEntity areaEntity = areaService.getMapper().selectOneById(areaId);
         AreaListOutput output = new AreaListOutput();
         BeanUtils.copyProperties(areaEntity, output);
-        output.setQrUrl(staticResourceConfigure.getUrl() + areaEntity.getQrUrl());
         return Result.success(output);
     }
 
@@ -123,7 +121,6 @@ public class AreaController {
         }
         AreaListOutput output = new AreaListOutput();
         BeanUtils.copyProperties(areaEntity, output);
-        output.setQrUrl(staticResourceConfigure.getUrl() + areaEntity.getQrUrl());
         return Result.success(output);
     }
 
@@ -144,7 +141,6 @@ public class AreaController {
         Page<AreaListOutput> dtoPage = userListDTOS.map(x -> {
             AreaListOutput roleDTO = new AreaListOutput();
             BeanUtils.copyProperties(x, roleDTO);
-            roleDTO.setQrUrl(staticResourceConfigure.getUrl() + x.getQrUrl());
             return roleDTO;
         });
         return Result.success(PageUtil.transform(dtoPage));
