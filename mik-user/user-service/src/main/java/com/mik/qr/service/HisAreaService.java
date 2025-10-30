@@ -13,12 +13,12 @@ import org.springframework.stereotype.Service;
 public class HisAreaService extends ServiceImpl<HisAreaMapper, HisAreaEntity> {
 
 
-    public void record(AreaCreateInput input){
+    public void record(Long areaId, String areaName, String content) {
         HisAreaEntity entity = new HisAreaEntity();
-        entity.setAreaId(input.getAreaId());
+        entity.setAreaId(areaId);
         entity.setUid("");
-        entity.setContent(input.getContent());
-        entity.setArea(input.getArea());
+        entity.setContent(content);
+        entity.setArea(areaName);
         entity.setUserId(UserContext.getUserId());
         this.save(entity);
     }
