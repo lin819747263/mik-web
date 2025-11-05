@@ -12,7 +12,7 @@
             INSERT INTO `permission` VALUES (3, 'role', '角色管理', 1, 1, 'UserFilled', '/home/role', '', '2025-01-08 13:42:26', '2025-01-08 13:42:26', 0);
             INSERT INTO `permission` VALUES (4, 'permission', '权限管理', 1, 1, 'Box', '/home/permission', '', '2025-01-08 13:43:28', '2025-01-08 13:43:28', 0);
             INSERT INTO `permission` VALUES (5, 'sys_setting', '系统设置', 0, 0, 'Film', '', '', '2025-01-08 13:44:14', '2025-01-10 11:44:23', 0);
-            INSERT INTO `permission` VALUES (6, 'qr', '二维码管理', 0, 0, 'FullScreen', '/home/qr', '', '2025-10-11 09:53:16', '2025-10-11 21:35:52', 0);
+            INSERT INTO `permission` VALUES (6, 'qr', '二维码管理', 0, 0, 'FullScreen', '/home/qr', '', '2025-10-11 09:53:16', '2025-10-11 21:35:52', 1);
             INSERT INTO `permission` VALUES (7, 'oper_log', '操作日志', 1, 5, 'AlarmClock', '/home/oper_log', '', '2025-10-18 18:27:08', '2025-10-18 18:27:08', 0);
         </sql>
     </changeSet>

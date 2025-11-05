@@ -13,4 +13,5 @@ import java.util.List;
 @ConfigurationProperties(prefix = "mik.white")
 public class WhiteListProperties {
     private String[] urls;
+    private String[] origins;
 }
