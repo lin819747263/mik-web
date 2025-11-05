@@ -5,6 +5,7 @@ import com.mik.core.exception.ServiceException;
 import com.mik.core.pojo.PageInput;
 import com.mik.core.pojo.Result;
 import com.mik.core.user.UserInfo;
+import com.mik.exception.SecurityConstant;
 import com.mik.security.UserContext;
 import com.mik.sys.OperationLog;
 import com.mik.user.controller.cqe.UserRegisterInput;
@@ -105,13 +106,16 @@ public class UserController {
 
     @PostMapping("/resetPassword")
     public Result resetPassword(Long userId){
+        if(userId == 1L || UserContext.getUserId().equals(userId)){
+            throw new ServiceException(SecurityConstant.NO_PERMISSION);
+        }
         User user = userService.getMapper().selectOneById(userId);
         user.setPassword(encoder.encode("123456"));
         userService.saveOrUpdate(user);
         return Result.success();
     }
 
-    @OperationLog(operation = "重置密码")
+    @OperationLog(operation = "修改密码", paramRecord = false)
     @PostMapping("/changePassword")
     public Result changePassword(String oldPassword, String newPassword){
         User user = userService.getMapper().selectOneById(UserContext.getUserId());

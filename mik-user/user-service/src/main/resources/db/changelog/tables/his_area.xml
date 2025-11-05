@@ -15,14 +15,14 @@
             CREATE TABLE `his_area`  (
                                          `his_area_id` bigint NOT NULL AUTO_INCREMENT COMMENT '历史区域ID，主键，自增',
                                          `area_id` bigint NOT NULL COMMENT '区域ID',
-                                         `uid` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '用户UID',
+                                         `uid` varchar(255)  NULL DEFAULT NULL COMMENT '用户UID',
                                          `user_id` bigint NOT NULL COMMENT '用户ID',
-                                         `area` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '区域',
-                                         `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '内容',
+                                         `area` varchar(200)  NOT NULL COMMENT '区域',
+                                         `content` text  NULL COMMENT '内容',
                                          `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                                          `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                                          PRIMARY KEY (`his_area_id`) USING BTREE
-            ) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '历史区域表' ROW_FORMAT = Dynamic;
+            ) ENGINE = InnoDB;
         </sql>
     </changeSet>
 </databaseChangeLog>

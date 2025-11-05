@@ -75,7 +75,7 @@ public class OperationLogAspect {
 
             OperationLogEntity record = OperationLogEntity.builder()
                     .url(requestUrL)
-                    .param(getParameter(pjp))
+                    .param(getParameter(pjp, anno.paramRecord()))
                     .userId(UserContext.getUserId())
                     .operationName(anno.operation())
                     .ip(clientIp)
@@ -93,7 +93,10 @@ public class OperationLogAspect {
         }
     }
 
-    public String getParameter(ProceedingJoinPoint pjp) {
+    public String getParameter(ProceedingJoinPoint pjp, boolean param) {
+        if (!param) {
+            return "";
+        }
         // 获取方法签名
         MethodSignature signature = (MethodSignature) pjp.getSignature();
         Method method = signature.getMethod();

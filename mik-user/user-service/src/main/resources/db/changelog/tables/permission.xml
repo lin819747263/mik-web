@@ -14,18 +14,18 @@
         <sql>
             CREATE TABLE `permission`  (
                                            `p_id` bigint NOT NULL AUTO_INCREMENT,
-                                           `code` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-                                           `name` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+                                           `code` varchar(20)  NOT NULL,
+                                           `name` varchar(20)  NOT NULL,
                                            `type` tinyint NOT NULL,
                                            `parent` bigint NULL DEFAULT NULL,
-                                           `icon` varchar(40) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT '',
-                                           `path` varchar(128) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT '',
-                                           `url` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,
+                                           `icon` varchar(40)  NULL DEFAULT '',
+                                           `path` varchar(128)  NULL DEFAULT '',
+                                           `url` varchar(100)  NULL DEFAULT NULL,
                                            `create_time` datetime NULL DEFAULT NULL,
                                            `update_time` datetime NULL DEFAULT NULL,
                                            `sort` int NOT NULL,
                                            PRIMARY KEY (`p_id`) USING BTREE
-            ) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = COMPACT;
+            ) ENGINE = InnoDB;
         </sql>
     </changeSet>
 </databaseChangeLog>

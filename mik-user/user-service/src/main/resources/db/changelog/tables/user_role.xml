@@ -19,7 +19,7 @@
                                           `create_time` datetime NULL DEFAULT NULL,
                                           `update_time` datetime NULL DEFAULT NULL,
                                           PRIMARY KEY (`id`) USING BTREE
-            ) ENGINE = InnoDB AUTO_INCREMENT = 28 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = COMPACT;
+            ) ENGINE = InnoDB;
         </sql>
     </changeSet>
 </databaseChangeLog>

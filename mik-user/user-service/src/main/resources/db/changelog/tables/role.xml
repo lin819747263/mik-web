@@ -14,11 +14,11 @@
         <sql>
             CREATE TABLE `role`  (
                                      `role_id` bigint NOT NULL AUTO_INCREMENT,
-                                     `role_name` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+                                     `role_name` varchar(20) NOT NULL,
                                      `create_time` datetime NULL DEFAULT NULL,
                                      `update_time` datetime NULL DEFAULT NULL,
                                      PRIMARY KEY (`role_id`) USING BTREE
-            ) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = COMPACT;
+            ) ENGINE = InnoDB;
         </sql>
     </changeSet>
 </databaseChangeLog>

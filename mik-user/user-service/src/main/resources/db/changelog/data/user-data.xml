@@ -7,7 +7,7 @@
 
     <changeSet id="#operation@init#table@user#time@2018-12-20" author="linguoshuai" labels="mik">
         <sql>
-            INSERT INTO `user` VALUES (1, 'admin', '', '12222222222', 'admin@163.com', '$2a$10$qDmUbcs2FE5LSNOlXgqezOgLSDMC0IzyghWN0hj0ZGOAZGOma1wmu', '', 1, '2025-01-09 13:52:54', '2025-01-08 17:11:32', '2025-10-18 21:44:21', 0, 1);
+            INSERT INTO `user` VALUES (1, 'sy-admin', '', '12222222222', 'admin@163.com', '$2a$10$yO1//NaiwmrqCv7nrxaTT.unuiFMHJJ8dH0KphDb4u21VbQJQoynC', '', 1, '2025-01-09 13:52:54', '2025-01-08 17:11:32', '2025-10-18 21:44:21', 0, 1);
         </sql>
     </changeSet>
 

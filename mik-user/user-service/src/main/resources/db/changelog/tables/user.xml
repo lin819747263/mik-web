@@ -14,12 +14,12 @@
         <sql>
             CREATE TABLE `user`  (
                                      `user_id` bigint NOT NULL AUTO_INCREMENT,
-                                     `username` varchar(64) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-                                     `nickname` varchar(64) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-                                     `mobile` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-                                     `email` varchar(128) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL,
-                                     `password` varchar(128) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-                                     `avatar` varchar(128) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT '',
+                                     `username` varchar(64)  NOT NULL,
+                                     `nickname` varchar(64)  NOT NULL,
+                                     `mobile` varchar(20)  NOT NULL,
+                                     `email` varchar(128)  NULL DEFAULT NULL,
+                                     `password` varchar(128)  NOT NULL,
+                                     `avatar` varchar(128)  NULL DEFAULT '',
                                      `sex` tinyint NULL DEFAULT NULL,
                                      `birthday` datetime NULL DEFAULT NULL,
                                      `create_time` datetime NULL DEFAULT NULL,
@@ -27,7 +27,7 @@
                                      `deleted` int NOT NULL,
                                      `enable` int NOT NULL,
                                      PRIMARY KEY (`user_id`) USING BTREE
-            ) ENGINE = InnoDB AUTO_INCREMENT = 48 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = COMPACT;
+            ) ENGINE = InnoDB;
         </sql>
     </changeSet>
 </databaseChangeLog>

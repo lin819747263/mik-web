@@ -8,4 +8,6 @@ import java.lang.annotation.*;
 public @interface OperationLog {
     // 操作名称，如“创建用户”
     String operation() default "";
+
+    boolean paramRecord() default true;
 }
