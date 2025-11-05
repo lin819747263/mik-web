@@ -20,7 +20,7 @@ public class HttpServletUtil {
      */
     public static void writeData(HttpServletResponse response, Object resultObj) throws IOException {
         // 允许跨域
-        response.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+//        response.setHeader("Access-Control-Allow-Origin", "http://192.168.31.96:5173");
         response.setHeader("Access-Control-Allow-Credentials", "true");
         response.setHeader("Access-Control-Allow-Methods", "*");
         // 设置编码

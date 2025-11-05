@@ -114,7 +114,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://192.168.65.25:5173","http://localhost:5173")); // 允许的源
+        configuration.setAllowedOrigins(Arrays.asList(whiteListProperties.getOrigins())); // 允许的源
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // 允许的HTTP方法
         configuration.setAllowedHeaders(Arrays.asList("*")); // 允许的头
         configuration.setAllowCredentials(true); // 是否允许携带cookie
