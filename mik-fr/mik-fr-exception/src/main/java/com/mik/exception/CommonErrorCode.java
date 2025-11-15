@@ -6,7 +6,7 @@ import lombok.Getter;
 public enum CommonErrorCode implements ErrorCode {
     UnKnowException(999, "未知错误,请联系管理员"),
     TooManyRequests(409, "Too Many Requests"),
-    paramError(10001, "Too Many Requests");
+    paramError(10001, "参数错误");
 
     private Integer code;
     private String message;

@@ -139,7 +139,7 @@
                 </executions>
             </plugin>
         </plugins>
-        <finalName>server-app-3.0.0</finalName> <!-- 打包后得到 myapp-1.0.jar 或 myapp-1.0.war -->
+        <finalName>qr-service</finalName> <!-- 打包后得到 myapp-1.0.jar 或 myapp-1.0.war -->
     </build>
 
 

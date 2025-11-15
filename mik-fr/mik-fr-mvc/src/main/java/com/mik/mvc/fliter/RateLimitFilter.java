@@ -30,7 +30,7 @@ public class RateLimitFilter implements Filter {
         String ip = getClientIp(req);
         String key = "rate_limit:" + ip;
 
-        if (!redisRateLimiter.isAllowed(key, 30, 10)) { // 1分钟内最多5次
+        if (!redisRateLimiter.isAllowed(key, 500, 10)) { // 1分钟内最多5次
             Result<Void> error = Result.error(CommonErrorCode.TooManyRequests);
             HttpServletUtil.writeData((HttpServletResponse)response, error);
             return;
