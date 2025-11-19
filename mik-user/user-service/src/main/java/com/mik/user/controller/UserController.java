@@ -110,7 +110,7 @@ public class UserController {
             throw new ServiceException(SecurityConstant.NO_PERMISSION);
         }
         User user = userService.getMapper().selectOneById(userId);
-        user.setPassword(encoder.encode("sy123456"));
+        user.setPassword(encoder.encode("sy123456#"));
         userService.saveOrUpdate(user);
         return Result.success();
     }

@@ -118,7 +118,7 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
         }
         BeanUtils.copyProperties(createDTO, user);
         if(createDTO.getUserId() == null){
-            user.setPassword(encoder.encode("123456"));
+            user.setPassword(encoder.encode("sy123456#"));
         }
 
         userMapper.insertOrUpdateSelective(user);
