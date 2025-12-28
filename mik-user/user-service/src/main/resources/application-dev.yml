@@ -33,15 +33,19 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.xml
+web:
+  ip: 192.168.31.92
+  port: 5173
+  port-bk: 8081
 
 file-path:
   path: D:/file/
-  url: http://192.168.31.96/upload/
+  url: http://${web.ip}:${web.port-bk}/upload/
 file:
   type: local
 
 qr:
-  path: http://192.168.31.96/layout/qr/info/
+  path: http://${web.ip}:${web.port}/layout/qr/info/
 
 mik:
   white:
@@ -59,11 +63,12 @@ mik:
       - "/area/getAreaByUid"
       - "/file/upload"
     origins:
-      - "http://192.168.31.97:5173"
+      - "http://192.168.31.92:5173"
       - "http://localhost:5173"
       - "http://syxzhcs.cn"
       - "https://syxzhcs.cn"
       - "https://syxzhcs.cn:3443"
+      - "http://192.168.200.129:5173"
 
 # knife4j的增强配置，不需要增强可以不配
 knife4j:
