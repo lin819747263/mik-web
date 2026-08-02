@@ -19,4 +19,8 @@
     <include file="classpath:db/changelog/tables/his_area.xml"/>
     <include file="classpath:db/changelog/tables/staff.xml"/>
 
+    <include file="classpath:db/changelog/tables/order.xml"/>
+    <include file="classpath:db/changelog/tables/order_timeline.xml"/>
+    <include file="classpath:db/changelog/tables/wx_user.xml"/>
+
 </databaseChangeLog>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="create_order_table" author="mik">
+        <createTable tableName="order">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_no" type="varchar(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="category_id" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category_name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sub_name" type="varchar(100)"/>
+            <column name="desc" type="text"/>
+            <column name="address" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="latitude" type="double">
+                <constraints nullable="false"/>
+            </column>
+            <column name="longitude" type="double">
+                <constraints nullable="false"/>
+            </column>
+            <column name="grid_name" type="varchar(200)"/>
+            <column name="grid_code" type="varchar(50)"/>
+            <column name="photos" type="text"/>
+            <column name="urgent" type="boolean" defaultValueBoolean="false"/>
+            <column name="anonymous" type="boolean" defaultValueBoolean="false"/>
+            <column name="phone" type="varchar(20)"/>
+            <column name="dept" type="varchar(200)"/>
+            <column name="status" type="varchar(20)" defaultValue="pending">
+                <constraints nullable="false"/>
+            </column>
+            <column name="score" type="int"/>
+            <column name="comment" type="text"/>
+            <column name="created_at" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="order" indexName="idx_order_no">
+            <column name="order_no"/>
+        </createIndex>
+
+        <createIndex tableName="order" indexName="idx_user_id">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex tableName="order" indexName="idx_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

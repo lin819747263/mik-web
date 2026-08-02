@@ -10,15 +10,20 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("file")
+@RequestMapping()
 public class FileController {
 
     @Autowired
     FileService fileService;
 
-    @PostMapping("upload")
+    @PostMapping("file/upload")
     public Result<FileOutput> upload(MultipartFile file, String path, Boolean rename) {
         return Result.success(fileService.upload(file, path, rename));
+    }
+
+    @PostMapping("v1/file/upload")
+    public Result<FileOutput> uploadv1(MultipartFile file) {
+        return Result.success(fileService.upload(file, "fix/", true));
     }
 
 }

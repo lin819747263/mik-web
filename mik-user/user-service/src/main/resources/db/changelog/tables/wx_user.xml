@@ -1,0 +1,38 @@
+    <?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="create_wx_user_table" author="mik">
+        <createTable tableName="wx_user">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="openid" type="varchar(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="unionid" type="varchar(100)"/>
+            <column name="nickname" type="varchar(100)"/>
+            <column name="avatar" type="varchar(500)"/>
+            <column name="phone" type="varchar(20)"/>
+            <column name="user_id" type="bigint"/>
+            <column name="created_at" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="wx_user" indexName="idx_openid">
+            <column name="openid"/>
+        </createIndex>
+
+        <createIndex tableName="wx_user" indexName="idx_user_id">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

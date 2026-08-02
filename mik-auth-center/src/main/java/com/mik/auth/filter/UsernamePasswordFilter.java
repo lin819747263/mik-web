@@ -14,7 +14,8 @@ import java.util.ArrayList;
 public class UsernamePasswordFilter extends AbstractAuthenticationProcessingFilter {
 
     public UsernamePasswordFilter() {
-        super("/login");
+        super("/" +
+                "login");
     }
 
     @Override
