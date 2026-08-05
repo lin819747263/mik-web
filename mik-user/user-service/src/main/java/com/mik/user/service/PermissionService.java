@@ -8,6 +8,7 @@ import com.mik.user.controller.cqe.PermissionQuery;
 import com.mik.user.entity.Permission;
 import com.mik.user.mapper.PermissionMapper;
 import com.mik.user.mapper.RolePermissionMapper;
+import com.mik.user.mapper.UserMapper;
 import com.mik.db.entity.utils.PageUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryColumn;
@@ -30,6 +31,9 @@ public class PermissionService extends ServiceImpl<PermissionMapper, Permission>
 
     @Autowired
     private RolePermissionMapper rolePermissionMapper;
+
+    @Autowired
+    private UserMapper userMapper;
 
 
     public PageResult<PermissionDTO> listPermissionPage(PermissionQuery query, PageInput page) {
@@ -61,14 +65,36 @@ public class PermissionService extends ServiceImpl<PermissionMapper, Permission>
 
     public List<PermissionDTO> listUserPermission(Long userId) {
         List<PermissionDTO> tree = new ArrayList<>();
-        List<PermissionDTO> res = permissionMapper.listUserPermission(userId);
 
-        Map<Long, PermissionDTO> collect = res.stream().collect(Collectors.toMap(PermissionDTO::getPId, Function.identity()));
+        // 1. 查询用户角色权限
+        List<PermissionDTO> rolePermissions = permissionMapper.listUserPermission(userId);
 
-        res.forEach(x -> {
+        // 2. 查询用户部门权限
+        com.mik.user.entity.User user = userMapper.selectOneById(userId);
+
+        List<PermissionDTO> allPermissions;
+        if (user != null && user.getDeptId() != null) {
+            // 有部门时：取交集
+            List<PermissionDTO> deptPermissions = permissionMapper.listDeptPermission(user.getDeptId());
+            Set<Long> deptPermIds = deptPermissions.stream()
+                    .map(PermissionDTO::getPId)
+                    .collect(Collectors.toSet());
+            allPermissions = rolePermissions.stream()
+                    .filter(p -> deptPermIds.contains(p.getPId()))
+                    .collect(Collectors.toList());
+        } else {
+            // 没有部门时：只取角色权限
+            allPermissions = new ArrayList<>(rolePermissions);
+        }
+
+        // 3. 构建树形结构
+        Map<Long, PermissionDTO> collect = allPermissions.stream()
+                .collect(Collectors.toMap(PermissionDTO::getPId, Function.identity()));
+
+        allPermissions.forEach(x -> {
             if(x.getParent() == 0) {
                 tree.add(x);
-            }else {
+            } else if (collect.containsKey(x.getParent())) {
                 collect.get(x.getParent()).getChildren().add(x);
             }
         });

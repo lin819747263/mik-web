@@ -28,4 +28,11 @@
         )
     </select>
 
+    <select id="listDeptPermission" resultMap="PermissionDTOResultMap" parameterType="java.lang.Long">
+        SELECT DISTINCT p.*
+        FROM dept_permission dp
+                 LEFT JOIN permission p ON p.p_id = dp.p_id
+        WHERE dp.dept_id = #{deptId}
+    </select>
+
 </mapper>

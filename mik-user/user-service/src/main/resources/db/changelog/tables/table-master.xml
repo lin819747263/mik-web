@@ -23,4 +23,11 @@
     <include file="classpath:db/changelog/tables/order_timeline.xml"/>
     <include file="classpath:db/changelog/tables/wx_user.xml"/>
 
+    <include file="classpath:db/changelog/tables/department.xml"/>
+    <include file="classpath:db/changelog/tables/dept_permission.xml"/>
+    <include file="classpath:db/changelog/tables/user-dept-column.xml"/>
+
+    <include file="classpath:db/changelog/tables/order-enhance.xml"/>
+    <include file="classpath:db/changelog/tables/order_setting.xml"/>
+
 </databaseChangeLog>

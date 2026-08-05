@@ -17,4 +17,5 @@ public class UserCreateDTO {
     private Integer enable = 1;
     private Date birthday = new Date();
     private String roleIds;
+    private Long deptId;
 }

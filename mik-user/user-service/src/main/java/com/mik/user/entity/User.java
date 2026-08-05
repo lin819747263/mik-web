@@ -24,4 +24,5 @@ public class User extends BaseDelEntity {
     private Date birthday;
     private String password;
     private String avatar;
+    private Long deptId;
 }

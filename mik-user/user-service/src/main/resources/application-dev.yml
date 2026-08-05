@@ -33,6 +33,19 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.xml
+
+# Flowable 配置
+flowable:
+  # 关闭异步执行，确保事务一致性
+  async-executor-activate: false
+  # 数据库表自动创建
+  database-schema-update: true
+  # 历史级别：audit 级别记录所有信息
+  history-level: audit
+  # 禁用 REST API 自动配置（避免冲突）
+  rest-api-enabled: false
+  # 使用 Spring 数据源
+  spring.datasource.driver-class-name: com.mysql.cj.jdbc.Driver
 web:
   ip: 192.168.31.92
   port: 5173

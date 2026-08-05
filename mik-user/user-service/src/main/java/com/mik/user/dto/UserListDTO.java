@@ -20,4 +20,6 @@ public class UserListDTO {
     private Date createTime;
     private Integer enable;
     private List<Long> roleIds = new ArrayList<>();
+    private Long deptId;
+    private String deptName;
 }

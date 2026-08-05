@@ -79,6 +79,11 @@ public class OrderVO {
     private String phone;
 
     /**
+     * 承办部门ID
+     */
+    private Long deptId;
+
+    /**
      * 承办单位
      */
     private String dept;
@@ -107,6 +112,36 @@ public class OrderVO {
      * 进度节点数组
      */
     private List<TimelineVO> timeline;
+
+    /**
+     * 当前任务名称
+     */
+    private String currentTaskName;
+
+    /**
+     * 当前任务处理人
+     */
+    private String currentTaskAssignee;
+
+    /**
+     * 指派处理人ID
+     */
+    private Long assigneeId;
+
+    /**
+     * 处理人姓名
+     */
+    private String assigneeName;
+
+    /**
+     * 审核人ID
+     */
+    private Long reviewerId;
+
+    /**
+     * 审核人姓名
+     */
+    private String reviewerName;
 
     @Data
     public static class TimelineVO {

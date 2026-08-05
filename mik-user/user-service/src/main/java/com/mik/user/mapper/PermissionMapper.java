@@ -12,4 +12,6 @@ public interface PermissionMapper extends BaseMapper<Permission> {
 
     List<PermissionDTO> listUserPermission(Long userId);
 
+    List<PermissionDTO> listDeptPermission(Long deptId);
+
 }

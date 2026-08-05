@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://flowable.org/test">
+
+  <process id="order-process" name="工单处理流程" isExecutable="true">
+
+    <!-- 开始事件：市民提交工单 -->
+    <startEvent id="start" name="提交工单"
+                flowable:formFieldValidation="true">
+      <extensionElements>
+        <flowable:executionListener event="start"
+            delegateExpression="${orderExecutionListener}"/>
+      </extensionElements>
+    </startEvent>
+
+    <!-- 受理任务：话务中心受理 -->
+    <userTask id="acceptTask" name="受理工单"
+              flowable:candidateGroups="operator"
+              flowable:formKey="order/accept">
+      <documentation>话务中心受理工单，确认问题分类和承办部门</documentation>
+    </userTask>
+
+    <!-- 指派任务：部门主管指派处理人 -->
+    <userTask id="assignTask" name="指派工单"
+              flowable:candidateGroups="leader"
+              flowable:formKey="order/assign">
+      <documentation>部门主管将工单指派给具体处理人员</documentation>
+    </userTask>
+
+    <!-- 处理任务：处理员执行处理 -->
+    <userTask id="processTask" name="处理工单"
+              flowable:assignee="${assigneeId}"
+              flowable:formKey="order/process">
+      <documentation>处理人员现场处理并提交结果</documentation>
+    </userTask>
+
+    <!-- 审核任务：审核员审核 -->
+    <userTask id="reviewTask" name="审核工单"
+              flowable:candidateGroups="reviewer"
+              flowable:formKey="order/review">
+      <documentation>审核员审核处理结果</documentation>
+    </userTask>
+
+    <!-- 结束事件 -->
+    <endEvent id="end" name="工单办结">
+      <extensionElements>
+        <flowable:executionListener event="end"
+            delegateExpression="${orderExecutionListener}"/>
+      </extensionElements>
+    </endEvent>
+
+    <!-- 退回网关：判断退回目标 -->
+    <exclusiveGateway id="rejectGateway" name="退回网关"/>
+
+    <!-- 退回至受理 -->
+    <userTask id="rejectToAcceptTask" name="退回至受理"
+              flowable:candidateGroups="operator"
+              flowable:formKey="order/reject">
+      <documentation>工单已退回，请重新受理</documentation>
+    </userTask>
+
+    <!-- 退回至指派 -->
+    <userTask id="rejectToAssignTask" name="退回至指派"
+              flowable:candidateGroups="leader"
+              flowable:formKey="order/reject">
+      <documentation>工单已退回，请重新指派</documentation>
+    </userTask>
+
+    <!-- 退回至处理 -->
+    <userTask id="rejectToProcessTask" name="退回至处理"
+              flowable:assignee="${assigneeId}"
+              flowable:formKey="order/reject">
+      <documentation>工单已退回，请重新处理</documentation>
+    </userTask>
+
+    <!-- 流转连线 -->
+    <sequenceFlow id="flow1" sourceRef="start" targetRef="acceptTask"/>
+
+    <!-- 受理通过 -> 指派 -->
+    <sequenceFlow id="flow2" sourceRef="acceptTask" targetRef="assignTask">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${approved == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- 受理退回 -> 退回至受理 -->
+    <sequenceFlow id="flow2_reject" sourceRef="acceptTask" targetRef="rejectToAcceptTask">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${approved == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- 指派完成 -> 处理 -->
+    <sequenceFlow id="flow3" sourceRef="assignTask" targetRef="processTask"/>
+
+    <!-- 处理完成 -> 审核 -->
+    <sequenceFlow id="flow4" sourceRef="processTask" targetRef="reviewTask"/>
+
+    <!-- 审核通过 -> 结束 -->
+    <sequenceFlow id="flow5" sourceRef="reviewTask" targetRef="end">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${approved == true}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- 审核退回 -> 退回网关 -->
+    <sequenceFlow id="flow5_reject" sourceRef="reviewTask" targetRef="rejectGateway">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${approved == false}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- 退回网关 -> 根据退回目标分流 -->
+    <sequenceFlow id="rejectToAccept" sourceRef="rejectGateway" targetRef="rejectToAssignTask">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${rejectTarget == 'assign'}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="rejectToProcess" sourceRef="rejectGateway" targetRef="rejectToProcessTask">
+      <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${rejectTarget == 'process'}]]>
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- 退回至受理 -> 指派 -->
+    <sequenceFlow id="rejectFlow1" sourceRef="rejectToAcceptTask" targetRef="assignTask"/>
+
+    <!-- 退回至指派 -> 处理 -->
+    <sequenceFlow id="rejectFlow2" sourceRef="rejectToAssignTask" targetRef="processTask"/>
+
+    <!-- 退回至处理 -> 审核 -->
+    <sequenceFlow id="rejectFlow3" sourceRef="rejectToProcessTask" targetRef="reviewTask"/>
+
+  </process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_order-process">
+    <bpmndi:BPMNPlane bpmnElement="order-process" id="BPMNPlane_order-process">
+      <bpmndi:BPMNShape bpmnElement="start" id="BPMNShape_start">
+        <omgdc:Bounds height="30.0" width="30.0" x="100.0" y="163.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="acceptTask" id="BPMNShape_acceptTask">
+        <omgdc:Bounds height="80.0" width="100.0" x="195.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="assignTask" id="BPMNShape_assignTask">
+        <omgdc:Bounds height="80.0" width="100.0" x="360.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="processTask" id="BPMNShape_processTask">
+        <omgdc:Bounds height="80.0" width="100.0" x="525.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="reviewTask" id="BPMNShape_reviewTask">
+        <omgdc:Bounds height="80.0" width="100.0" x="690.0" y="138.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="end" id="BPMNShape_end">
+        <omgdc:Bounds height="28.0" width="28.0" x="855.0" y="164.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="rejectGateway" id="BPMNShape_rejectGateway">
+        <omgdc:Bounds height="40.0" width="40.0" x="720.0" y="280.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="rejectToAcceptTask" id="BPMNShape_rejectToAcceptTask">
+        <omgdc:Bounds height="80.0" width="100.0" x="360.0" y="320.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="rejectToAssignTask" id="BPMNShape_rejectToAssignTask">
+        <omgdc:Bounds height="80.0" width="100.0" x="525.0" y="320.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="rejectToProcessTask" id="BPMNShape_rejectToProcessTask">
+        <omgdc:Bounds height="80.0" width="100.0" x="690.0" y="320.0"/>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

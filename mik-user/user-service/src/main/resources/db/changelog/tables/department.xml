@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="#operation@create#table@department#time@2024-01-01" author="mik" labels="mik">
+        <preConditions onFail="MARK_RAN" onErrorMessage="表department已存在,不需要创建">
+            <not>
+                <tableExists tableName="department"/>
+            </not>
+        </preConditions>
+        <sql>
+            CREATE TABLE `department`  (
+                                          `dept_id` bigint NOT NULL AUTO_INCREMENT,
+                                          `dept_name` varchar(50) NOT NULL COMMENT '部门名称',
+                                          `parent_id` bigint DEFAULT 0 COMMENT '父部门ID，0表示根节点',
+                                          `level` tinyint DEFAULT 1 COMMENT '层级 1/2/3',
+                                          `sort` int DEFAULT 0 COMMENT '排序号',
+                                          `enable` tinyint DEFAULT 1 COMMENT '是否启用 1是 0否',
+                                          `remark` varchar(200) DEFAULT '' COMMENT '备注',
+                                          `create_time` datetime NULL DEFAULT NULL,
+                                          `update_time` datetime NULL DEFAULT NULL,
+                                          PRIMARY KEY (`dept_id`) USING BTREE
+            ) ENGINE = InnoDB;
+        </sql>
+    </changeSet>
+
+    <changeSet id="department_add_receiver_id" author="mik">
+        <addColumn tableName="department">
+            <column name="receiver_id" type="bigint" remarks="负责人ID"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

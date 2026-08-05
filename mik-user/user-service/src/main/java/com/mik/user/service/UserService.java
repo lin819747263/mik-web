@@ -16,6 +16,8 @@ import com.mik.user.entity.User;
 import com.mik.user.entity.UserRole;
 import com.mik.user.mapper.UserMapper;
 import com.mik.user.mapper.UserRoleMapper;
+import com.mik.dept.entity.Department;
+import com.mik.dept.mapper.DepartmentMapper;
 import com.mik.db.entity.utils.PageUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryColumn;
@@ -45,6 +47,8 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
     private UserMapper userMapper;
     @Autowired
     private UserRoleMapper userRoleMapper;
+    @Autowired
+    private DepartmentMapper departmentMapper;
 
     @Autowired
     private PasswordEncoder encoder;
@@ -76,6 +80,13 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
             List<UserRole> userRoles = userRoleMapper.selectListByCondition(QueryCondition.create(new QueryColumn("user_id"), "=", x.getUserId()));
             List<Long> roleIds = userRoles.stream().map(UserRole::getRoleId).collect(Collectors.toList());
             userListDTO.setRoleIds(roleIds);
+            // 查询部门名称
+            if (x.getDeptId() != null) {
+                Department dept = departmentMapper.selectOneById(x.getDeptId());
+                if (dept != null) {
+                    userListDTO.setDeptName(dept.getDeptName());
+                }
+            }
             return userListDTO;
         });
 

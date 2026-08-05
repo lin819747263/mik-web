@@ -98,6 +98,67 @@ public class UserController {
         return Result.success(userService.listByConditionPage(query, pageInput));
     }
 
+    /**
+     * 简单用户列表（不分页，供选择器使用）
+     */
+    @GetMapping("/simpleList")
+    public Result simpleList() {
+        List<User> users = userService.getMapper().selectAll();
+        List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
+        for (User u : users) {
+            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            map.put("userId", u.getUserId());
+            map.put("username", u.getUsername());
+            map.put("nickname", u.getNickname());
+            map.put("deptId", u.getDeptId());
+            list.add(map);
+        }
+        return Result.success(list);
+    }
+
+    @Autowired
+    com.mik.dept.mapper.DepartmentMapper departmentMapper;
+
+    /**
+     * 按部门查询用户列表（含子部门）
+     */
+    @GetMapping("/listByDept")
+    public Result listByDept(Long deptId) {
+        List<User> users;
+        if (deptId == null) {
+            users = userService.getMapper().selectAll();
+        } else {
+            List<Long> deptIds = new java.util.ArrayList<>();
+            deptIds.add(deptId);
+            collectChildDeptIds(deptId, deptIds);
+            com.mybatisflex.core.query.QueryWrapper wrapper = com.mybatisflex.core.query.QueryWrapper.create()
+                    .select().from("user")
+                    .where(new com.mybatisflex.core.query.QueryColumn("dept_id").in(deptIds));
+            users = userService.getMapper().selectListByQuery(wrapper);
+        }
+        List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
+        for (User u : users) {
+            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            map.put("userId", u.getUserId());
+            map.put("username", u.getUsername());
+            map.put("nickname", u.getNickname());
+            map.put("deptId", u.getDeptId());
+            list.add(map);
+        }
+        return Result.success(list);
+    }
+
+    private void collectChildDeptIds(Long parentId, List<Long> ids) {
+        com.mybatisflex.core.query.QueryWrapper wrapper = com.mybatisflex.core.query.QueryWrapper.create()
+                .select("dept_id").from("department")
+                .where(new com.mybatisflex.core.query.QueryColumn("parent_id").eq(parentId));
+        List<com.mik.dept.entity.Department> depts = departmentMapper.selectListByQuery(wrapper);
+        for (com.mik.dept.entity.Department dept : depts) {
+            ids.add(dept.getDeptId());
+            collectChildDeptIds(dept.getDeptId(), ids);
+        }
+    }
+
     @PostMapping("/logout")
     public Result logout(){
         userService.logout();

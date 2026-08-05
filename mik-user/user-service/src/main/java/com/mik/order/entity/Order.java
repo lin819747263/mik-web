@@ -91,7 +91,32 @@ public class Order {
     private String dept;
 
     /**
-     * 工单状态：pending/accepted/dispatched/processing/done/rated/rejected
+     * 承办部门ID
+     */
+    private Long deptId;
+
+    /**
+     * 指派处理人ID
+     */
+    private Long assigneeId;
+
+    /**
+     * 处理人姓名
+     */
+    private String assigneeName;
+
+    /**
+     * 审核人ID
+     */
+    private Long reviewerId;
+
+    /**
+     * 审核人姓名
+     */
+    private String reviewerName;
+
+    /**
+     * 工单状态：pending/accepted/assigned/processing/reviewing/done/rated/rejected
      */
     private String status;
 
@@ -121,4 +146,9 @@ public class Order {
      * 创建人ID
      */
     private Long userId;
+
+    /**
+     * 流程实例ID
+     */
+    private String processInstanceId;
 }

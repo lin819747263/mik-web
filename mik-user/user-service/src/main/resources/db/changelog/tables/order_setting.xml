@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="create_table_order_setting" author="mik">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="order_setting"/>
+            </not>
+        </preConditions>
+        <sql>
+            CREATE TABLE `order_setting` (
+                `id` bigint NOT NULL AUTO_INCREMENT,
+                `default_assignee_id` bigint DEFAULT NULL COMMENT '默认指派人员ID',
+                `default_assignee_name` varchar(50) DEFAULT NULL COMMENT '默认指派人员姓名',
+                `default_reviewer_id` bigint DEFAULT NULL COMMENT '默认审核人员ID',
+                `default_reviewer_name` varchar(50) DEFAULT NULL COMMENT '默认审核人员姓名',
+                `create_time` datetime DEFAULT NULL,
+                `update_time` datetime DEFAULT NULL,
+                PRIMARY KEY (`id`)
+            ) ENGINE = InnoDB COMMENT = '工单设置表';
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

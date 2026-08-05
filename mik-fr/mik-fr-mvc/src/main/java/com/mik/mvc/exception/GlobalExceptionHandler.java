@@ -40,7 +40,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public Object undeclaredThrowableExceptionHandler(HttpServletRequest request, HttpServletResponse response, Exception ex) {
-        log.debug("未处理异常", ex);
+        log.info("未处理异常", ex);
         return Result.error(ResultCode.UNKNOW.getCode(), ex.getMessage());
     }
 

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <!-- 工单表增加字段（原有） -->
+    <changeSet id="order_add_columns" author="mik">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="order" columnName="dept_id"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="order">
+            <column name="dept_id" type="bigint" remarks="承办部门ID"/>
+            <column name="assignee_id" type="bigint" remarks="指派处理人ID"/>
+            <column name="assignee_name" type="varchar(50)" remarks="处理人姓名"/>
+            <column name="reviewer_id" type="bigint" remarks="审核人ID"/>
+            <column name="reviewer_name" type="varchar(50)" remarks="审核人姓名"/>
+        </addColumn>
+
+        <createIndex tableName="order" indexName="idx_dept_id">
+            <column name="dept_id"/>
+        </createIndex>
+
+        <createIndex tableName="order" indexName="idx_assignee_id">
+            <column name="assignee_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 工单表增加流程实例ID字段（新增） -->
+    <changeSet id="order_add_process_instance_id" author="mik">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="order" columnName="process_instance_id"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="order">
+            <column name="process_instance_id" type="varchar(64)" remarks="流程实例ID"/>
+        </addColumn>
+
+        <createIndex tableName="order" indexName="idx_process_instance_id">
+            <column name="process_instance_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 员工部门关联表 -->
+    <changeSet id="create_user_dept_table" author="mik">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="user_dept"/>
+            </not>
+        </preConditions>
+        <createTable tableName="user_dept">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="dept_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="user_dept"
+                             columnNames="user_id, dept_id"
+                             constraintName="uk_user_dept"/>
+
+        <createIndex tableName="user_dept" indexName="idx_user_dept_dept_id">
+            <column name="dept_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
