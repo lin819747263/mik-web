@@ -83,6 +83,18 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         order.setUpdatedAt(LocalDateTime.now());
         order.setUserId(userId);
 
+        // 从工单设置中获取默认指派人员和审核人员
+        OrderSetting setting = orderSettingService.getSetting();
+        if (setting.getDefaultAssigneeId() != null) {
+            order.setAssigneeId(setting.getDefaultAssigneeId());
+            order.setAssigneeName(setting.getDefaultAssigneeName());
+            order.setStatus("assigned");
+        }
+        if (setting.getDefaultReviewerId() != null) {
+            order.setReviewerId(setting.getDefaultReviewerId());
+            order.setReviewerName(setting.getDefaultReviewerName());
+        }
+
         orderMapper.insert(order);
 
         // 启动流程
