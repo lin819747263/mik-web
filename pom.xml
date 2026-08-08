@@ -10,13 +10,8 @@
     <version>0.0.1-SNAPSHOT</version>
 
     <modules>
-        <module>mik-gateway</module>
-        <module>auth-server</module>
         <module>mik-user</module>
-        <module>mik-admin</module>
         <module>mik-fr</module>
-        <module>mik-auth-center</module>
-        <module>mik-gw</module>
         <module>mik-fr/mik-fr-file</module>
         <module>mik-fr/mik-fr-exception</module>
     </modules>
