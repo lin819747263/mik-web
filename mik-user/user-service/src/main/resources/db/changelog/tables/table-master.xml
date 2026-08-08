@@ -29,5 +29,9 @@
 
     <include file="classpath:db/changelog/tables/order-enhance.xml"/>
     <include file="classpath:db/changelog/tables/order_setting.xml"/>
+    <include file="classpath:db/changelog/tables/order_dept_receiver.xml"/>
+
+    <include file="classpath:db/changelog/tables/warranty_category.xml"/>
+    <include file="classpath:db/changelog/tables/warranty-category-home-column.xml"/>
 
 </databaseChangeLog>

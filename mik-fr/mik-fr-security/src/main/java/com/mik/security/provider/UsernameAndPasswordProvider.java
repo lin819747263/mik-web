@@ -27,6 +27,9 @@ public class UsernameAndPasswordProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         UsernamePasswordToken token = (UsernamePasswordToken) authentication;
+        if (token.getPrincipal() == null || token.getCredentials() == null) {
+            throw new BadCredentialsException("用户名或密码不能为空");
+        }
         String username = token.getPrincipal().toString();
         String password = token.getCredentials().toString();
 

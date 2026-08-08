@@ -94,13 +94,8 @@ public class SecurityConfig {
         HttpSecurity httpConfig = http.authorizeHttpRequests(requestMatcherRegistry -> {
                     requestMatcherRegistry
                             .requestMatchers(whiteListProperties.getUrls()).permitAll()
-//                            .requestMatchers("/doc.html", "/v3/api-docs", "/swagger-resources/**",
-//                                    "/webjars/**", "/configuration/ui", "/configuration/security",
-//                                    "/favicon.ico", "/css/**", "/js/**", "/img/**", "/fonts/**","/v3/api-docs"
-//                            , "/.well-known/appspecific/com.chrome.devtools.json")
-//                            .permitAll()
-//
-//                            .requestMatchers("/login","/sms/login","/v3/api-docs/swagger-config").permitAll()
+                            // 小程序公开接口（不需要认证）
+                            .requestMatchers("/warranty/category/miniapp").permitAll()
                             .anyRequest().authenticated();
                 }).csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))

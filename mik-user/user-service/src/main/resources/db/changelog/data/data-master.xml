@@ -10,5 +10,7 @@
     <include file="classpath:db/changelog/data/role-data.xml"/>
     <include file="classpath:db/changelog/data/user-data.xml"/>
     <include file="classpath:db/changelog/data/permission-dept-data.xml"/>
+    <include file="classpath:db/changelog/data/warranty-menu-data.xml"/>
+    <include file="classpath:db/changelog/data/warranty-category-data.xml"/>
 
 </databaseChangeLog>
