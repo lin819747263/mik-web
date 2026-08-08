@@ -8,9 +8,9 @@ import com.mik.client.filter.AuthorFilter;
 import com.mik.core.constant.CommonConstant;
 import com.mik.core.pojo.Result;
 import com.mik.core.util.HttpServletUtil;
-import com.mik.core.util.ObjectMapper;
 import com.mik.exception.SecurityConstant;
 import com.mik.security.UserInfo;
+import com.mik.security.captcha.CaptchaVerifier;
 import com.mik.security.filter.SmsLoginFilter;
 import com.mik.security.filter.UsernamePasswordFilter;
 import com.mik.security.provider.SmsProvider;
@@ -19,7 +19,7 @@ import com.mik.security.service.UserDetailService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -33,9 +33,6 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.util.DigestUtils;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -56,6 +53,12 @@ public class SecurityConfig {
     WhiteListProperties whiteListProperties;
     @Autowired
     RedisTemplate redisTemplate;
+
+    /**
+     * 可选注入：验证码验证器（如果模块实现了 CaptchaVerifier 接口）
+     */
+    @Autowired(required = false)
+    CaptchaVerifier captchaVerifier;
 
 
     @Bean
@@ -89,11 +92,17 @@ public class SecurityConfig {
         usernamePasswordFilter1.setAuthenticationManager(authenticationManager(http));
         usernamePasswordFilter1.setAuthenticationSuccessHandler(successHandler());
         usernamePasswordFilter1.setAuthenticationFailureHandler(failureHandler());
+        // 设置验证码验证器（如果存在）
+        if (captchaVerifier != null) {
+            usernamePasswordFilter1.setCaptchaVerifier(captchaVerifier);
+        }
 
 
         HttpSecurity httpConfig = http.authorizeHttpRequests(requestMatcherRegistry -> {
                     requestMatcherRegistry
                             .requestMatchers(whiteListProperties.getUrls()).permitAll()
+                            // 验证码接口公开
+                            .requestMatchers("/captcha/**").permitAll()
                             // 小程序公开接口（不需要认证）
                             .requestMatchers("/warranty/category/miniapp").permitAll()
                             .anyRequest().authenticated();
@@ -107,15 +116,15 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+        org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
         configuration.setAllowedOriginPatterns(List.of("*"));// 允许的源
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // 允许的HTTP方法
         configuration.setAllowedHeaders(Arrays.asList("*")); // 允许的头
         configuration.setAllowCredentials(true); // 是否允许携带cookie
         configuration.setMaxAge(3600L); // 预检请求的有效期，单位为秒
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration); // 对所有路径应用这个配置
         return source;
     }

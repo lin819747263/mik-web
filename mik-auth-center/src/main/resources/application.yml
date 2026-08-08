@@ -45,3 +45,20 @@ server:
 logging:
   level:
     com.mik.user.api: DEBUG
+
+# 滑动验证码配置
+tianai:
+  captcha:
+    # 缓存类型: default(内存) / redis
+    cache-type: default
+    # 验证码类型: slider(滑动)
+    captcha-type: slider
+    slider:
+      # 背景图片尺寸
+      bg-width: 300
+      bg-height: 180
+      # 滑块尺寸
+      template-width: 60
+      template-height: 58
+      # 滑块形状: round(圆形) / rect(方形)
+      template-shape: round

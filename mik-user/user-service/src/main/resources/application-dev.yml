@@ -83,6 +83,7 @@ mik:
       - "/v1/auth/login"
       - "/v1/file/**"
       - "/warranty/category/miniapp"
+      - "/captcha/**"
     origins:
       - "http://192.168.31.92:5173"
       - "http://localhost:5173"
@@ -151,6 +152,26 @@ server:
 wx:
   appid: wxaff788604c6177fb
   secret: 2a53752060e3b17c04cdf6d3544dc327
+
+# 验证码配置 (AJ-Captcha)
+aj:
+  captcha:
+    # 缓存类型: local/redis
+    cache-type: redis
+    # 验证码类型: clickWord/slide
+    captcha-type: slide
+    # 滑动验证
+    slide:
+      # 背景图片宽度
+      width: 300
+      # 背景图片高度
+      height: 200
+      # 滑块宽度
+      template-width: 60
+      # 滑块高度
+      template-height: 60
+    # 校验滑动区域误差范围
+    slip-offset: 5
 
 #配置可监控信息
 management:

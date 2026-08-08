@@ -2,10 +2,12 @@ package com.mik.auth.config;
 
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mik.auth.controller.CaptchaController;
 import com.mik.auth.filter.SmsLoginFilter;
 import com.mik.auth.filter.UsernamePasswordFilter;
 import com.mik.auth.provider.SmsProvider;
 import com.mik.auth.provider.UsernameAndPasswordProvider;
+import com.mik.auth.service.LoginFailureService;
 import com.mik.auth.service.UserDetailService;
 import com.mik.client.WhiteListProperties;
 import com.mik.client.filter.AuthorFilter;
@@ -47,6 +49,12 @@ public class SecurityConfig {
     @Autowired
     WhiteListProperties whiteListProperties;
 
+    @Autowired
+    LoginFailureService loginFailureService;
+
+    @Autowired
+    CaptchaController captchaController;
+
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
 
@@ -81,6 +89,8 @@ public class SecurityConfig {
         usernamePasswordFilter1.setAuthenticationManager(authenticationManager(http));
         usernamePasswordFilter1.setAuthenticationSuccessHandler(successHandler());
         usernamePasswordFilter1.setAuthenticationFailureHandler(failureHandler());
+        usernamePasswordFilter1.setLoginFailureService(loginFailureService);
+        usernamePasswordFilter1.setCaptchaController(captchaController);
 
 
         HttpSecurity httpConfig = http.authorizeHttpRequests(requestMatcherRegistry -> {
@@ -90,7 +100,7 @@ public class SecurityConfig {
                                     "/favicon.ico", "/css/**", "/js/**", "/img/**", "/fonts/**")
                             .permitAll()
 
-                            .requestMatchers("/login","/sms/login").permitAll()
+                            .requestMatchers("/login","/sms/login","/captcha/**").permitAll()
                             .anyRequest().authenticated();
                 }).csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(new AuthorFilter(whiteListProperties), UsernamePasswordAuthenticationFilter.class)

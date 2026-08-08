@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="create_table_warranty_category" author="mik">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="warranty_category"/>
+            </not>
+        </preConditions>
+        <sql>
+            CREATE TABLE `warranty_category` (
+                `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+                `name` varchar(100) NOT NULL COMMENT '问题名称',
+                `parent_id` bigint DEFAULT 0 COMMENT '父级ID（0为一级）',
+                `level` int DEFAULT 1 COMMENT '层级（1/2）',
+                `dept_id` bigint DEFAULT NULL COMMENT '负责部门ID',
+                `dept_name` varchar(100) DEFAULT NULL COMMENT '负责部门名称',
+                `sort` int DEFAULT 0 COMMENT '排序号',
+                `enable` int DEFAULT 1 COMMENT '状态（0禁用/1启用）',
+                `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                PRIMARY KEY (`id`),
+                KEY `idx_parent_id` (`parent_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='保修问题分类表';
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

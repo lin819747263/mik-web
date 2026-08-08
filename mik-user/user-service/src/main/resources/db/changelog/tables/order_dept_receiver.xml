@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="create_table_order_dept_receiver" author="mik">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="order_dept_receiver"/>
+            </not>
+        </preConditions>
+        <sql>
+            CREATE TABLE `order_dept_receiver` (
+                `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+                `dept_id` bigint DEFAULT NULL COMMENT '部门ID',
+                `dept_name` varchar(100) DEFAULT NULL COMMENT '部门名称',
+                `receiver_id` bigint DEFAULT NULL COMMENT '接收人ID',
+                `receiver_name` varchar(50) DEFAULT NULL COMMENT '接收人姓名',
+                `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `uk_dept_id` (`dept_id`)
+            ) ENGINE = InnoDB COMMENT = '部门工单接收人配置表';
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="add_show_on_home_to_warranty_category" author="mik">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="warranty_category" columnName="show_on_home"/>
+            </not>
+        </preConditions>
+        <sql>
+            ALTER TABLE `warranty_category` ADD COLUMN `show_on_home` tinyint DEFAULT 0 COMMENT '首页展示（0否/1是）' AFTER `enable`;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

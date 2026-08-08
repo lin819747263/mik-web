@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="add_warranty_menu" author="mik">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM permission WHERE code = 'warranty'
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            INSERT INTO `permission` VALUES (100, 'warranty', '保修管理', 0, 0, 'Warning', '', '', NOW(), NOW(), 0);
+            INSERT INTO `permission` VALUES (101, 'warranty_category', '问题分类', 1, 100, 'List', '/home/warranty/category', '', NOW(), NOW(), 0);
+        </sql>
+    </changeSet>
+
+    <changeSet id="assign_warranty_menu_to_admin" author="mik">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM role_permission WHERE p_id = 100
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            INSERT INTO `role_permission` (`role_id`, `p_id`, `create_time`, `update_time`) VALUES (1, 100, NOW(), NOW());
+            INSERT INTO `role_permission` (`role_id`, `p_id`, `create_time`, `update_time`) VALUES (1, 101, NOW(), NOW());
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

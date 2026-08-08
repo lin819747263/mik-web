@@ -1,6 +1,10 @@
 package com.mik.auth.filter;
 
+import com.alibaba.fastjson.JSON;
+import com.mik.auth.controller.CaptchaController;
+import com.mik.auth.service.LoginFailureService;
 import com.mik.auth.token.UsernamePasswordToken;
+import com.mik.core.pojo.Result;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,16 +17,50 @@ import java.util.ArrayList;
 
 public class UsernamePasswordFilter extends AbstractAuthenticationProcessingFilter {
 
+    private LoginFailureService loginFailureService;
+    private CaptchaController captchaController;
+
     public UsernamePasswordFilter() {
-        super("/" +
-                "login");
+        super("/login");
+    }
+
+    public void setLoginFailureService(LoginFailureService loginFailureService) {
+        this.loginFailureService = loginFailureService;
+    }
+
+    public void setCaptchaController(CaptchaController captchaController) {
+        this.captchaController = captchaController;
     }
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
-        String mobile = request.getParameter("username");
-        String code = request.getParameter("password");
-        UsernamePasswordToken token = new UsernamePasswordToken(new ArrayList<>(), mobile, code);
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+
+        // 检查是否需要验证码
+        if (loginFailureService != null && loginFailureService.needCaptcha(username)) {
+            String captchaId = request.getParameter("captchaId");
+
+            // 验证码参数缺失
+            if (captchaId == null || captchaId.isEmpty()) {
+                writeError(response, 5002, "请输入验证码");
+                return null;
+            }
+
+            // 检查验证码是否已验证通过
+            if (captchaController == null || !captchaController.isCaptchaVerified(captchaId)) {
+                writeError(response, 5002, "验证码无效或已过期，请重新验证");
+                return null;
+            }
+        }
+
+        UsernamePasswordToken token = new UsernamePasswordToken(new ArrayList<>(), username, password);
         return this.getAuthenticationManager().authenticate(token);
+    }
+
+    private void writeError(HttpServletResponse response, int code, String message) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        Result<?> result = Result.error(code, message);
+        response.getWriter().write(JSON.toJSONString(result));
     }
 }

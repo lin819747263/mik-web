@@ -1,0 +1,9 @@
+package com.mik.order.mapper;
+
+import com.mik.order.entity.OrderDeptReceiver;
+import com.mybatisflex.core.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
+
+@Mapper
+public interface OrderDeptReceiverMapper extends BaseMapper<OrderDeptReceiver> {
+}

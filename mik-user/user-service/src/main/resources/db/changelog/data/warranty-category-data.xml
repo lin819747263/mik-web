@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="init_warranty_category_data" author="mik">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM warranty_category
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            <!-- 一级分类 -->
+            INSERT INTO `warranty_category` (`id`, `name`, `parent_id`, `level`, `dept_name`, `sort`, `enable`) VALUES
+            (1, '道路损坏', 0, 1, '交通运输局', 1, 1),
+            (2, '路灯不亮', 0, 1, '城市照明所', 2, 1),
+            (3, '垃圾堆积', 0, 1, '环卫服务中心', 3, 1),
+            (4, '污水外溢', 0, 1, '水务集团', 4, 1),
+            (5, '占道经营', 0, 1, '综合执法局', 5, 1),
+            (6, '违规停车', 0, 1, '交警大队', 6, 1),
+            (7, '供水供暖', 0, 1, '热力公司', 7, 1),
+            (8, '其他问题', 0, 1, '12345话务中心', 8, 1);
+
+            <!-- 二级分类：道路损坏 -->
+            INSERT INTO `warranty_category` (`name`, `parent_id`, `level`, `sort`, `enable`) VALUES
+            ('路面坑洼', 1, 2, 1, 1),
+            ('井盖缺失/破损', 1, 2, 2, 1),
+            ('路面塌陷', 1, 2, 3, 1),
+            ('人行道破损', 1, 2, 4, 1);
+
+            <!-- 二级分类：路灯不亮 -->
+            INSERT INTO `warranty_category` (`name`, `parent_id`, `level`, `sort`, `enable`) VALUES
+            ('整条街不亮', 2, 2, 1, 1),
+            ('单杆不亮', 2, 2, 2, 1),
+            ('白天长明', 2, 2, 3, 1),
+            ('灯杆倾斜漏电', 2, 2, 4, 1);
+
+            <!-- 二级分类：垃圾堆积 -->
+            INSERT INTO `warranty_category` (`name`, `parent_id`, `level`, `sort`, `enable`) VALUES
+            ('垃圾桶满溢', 3, 2, 1, 1),
+            ('建筑垃圾乱堆', 3, 2, 2, 1),
+            ('生活垃圾未清运', 3, 2, 3, 1),
+            ('死角积存垃圾', 3, 2, 4, 1);
+
+            <!-- 二级分类：污水外溢 -->
+            INSERT INTO `warranty_category` (`name`, `parent_id`, `level`, `sort`, `enable`) VALUES
+            ('污水井外溢', 4, 2, 1, 1),
+            ('雨水管堵塞', 4, 2, 2, 1),
+            ('化粪池满溢', 4, 2, 3, 1),
+            ('排水沟异味', 4, 2, 4, 1);
+
+            <!-- 二级分类：占道经营 -->
+            INSERT INTO `warranty_category` (`name`, `parent_id`, `level`, `sort`, `enable`) VALUES
+            ('流动摊贩占道', 5, 2, 1, 1),
+            ('店外经营', 5, 2, 2, 1),
+            ('货物堆占人行道', 5, 2, 3, 1),
+            ('广告牌违规', 5, 2, 4, 1);
+
+            <!-- 二级分类：违规停车 -->
+            INSERT INTO `warranty_category` (`name`, `parent_id`, `level`, `sort`, `enable`) VALUES
+            ('占用消防通道', 6, 2, 1, 1),
+            ('人行道停车', 6, 2, 2, 1),
+            ('僵尸车', 6, 2, 3, 1),
+            ('路口乱停', 6, 2, 4, 1);
+
+            <!-- 二级分类：供水供暖 -->
+            INSERT INTO `warranty_category` (`name`, `parent_id`, `level`, `sort`, `enable`) VALUES
+            ('停水', 7, 2, 1, 1),
+            ('水压低', 7, 2, 2, 1),
+            ('暖气不热', 7, 2, 3, 1),
+            ('管道漏水', 7, 2, 4, 1);
+
+            <!-- 二级分类：其他问题 -->
+            INSERT INTO `warranty_category` (`name`, `parent_id`, `level`, `sort`, `enable`) VALUES
+            ('噪音扰民', 8, 2, 1, 1),
+            ('空气异味', 8, 2, 2, 1),
+            ('公共设施损坏', 8, 2, 3, 1),
+            ('其他', 8, 2, 4, 1);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
