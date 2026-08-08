@@ -62,11 +62,6 @@
             <version>2.3.0</version>
         </dependency>
         <!-- 滑动验证码 -->
-        <dependency>
-            <groupId>cloud.tianai.captcha</groupId>
-            <artifactId>captcha-spring-boot3-starter</artifactId>
-            <version>1.4.0</version>
-        </dependency>
         <!-- Redis -->
         <dependency>
             <groupId>com.mik</groupId>
