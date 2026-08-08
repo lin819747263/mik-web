@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="add_order_sub_menus" author="mik">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM permission WHERE code = 'order' AND type = 0
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            INSERT INTO `permission` (`code`, `name`, `type`, `parent`, `icon`, `path`, `sort`, `create_time`, `update_time`)
+            VALUES ('order:unresolved', '待处理工单', 1, (SELECT p_id FROM (SELECT p_id FROM permission WHERE code = 'order') t), 'WarningFilled', '', 1, NOW(), NOW());
+            INSERT INTO `permission` (`code`, `name`, `type`, `parent`, `icon`, `path`, `sort`, `create_time`, `update_time`)
+            VALUES ('order:history', '历史工单', 1, (SELECT p_id FROM (SELECT p_id FROM permission WHERE code = 'order') t), 'Clock', '', 2, NOW(), NOW());
+            INSERT INTO `permission` (`code`, `name`, `type`, `parent`, `icon`, `path`, `sort`, `create_time`, `update_time`)
+            VALUES ('order:all', '全部工单', 1, (SELECT p_id FROM (SELECT p_id FROM permission WHERE code = 'order') t), 'List', '', 3, NOW(), NOW());
+            INSERT INTO `permission` (`code`, `name`, `type`, `parent`, `icon`, `path`, `sort`, `create_time`, `update_time`)
+            VALUES ('order:setting', '工单设置', 1, (SELECT p_id FROM (SELECT p_id FROM permission WHERE code = 'order') t), 'Setting', '', 4, NOW(), NOW());
+        </sql>
+    </changeSet>
+
+    <changeSet id="assign_order_menu_to_admin" author="mik">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM role_permission WHERE p_id = (SELECT p_id FROM (SELECT p_id FROM permission WHERE code = 'order') t)
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            INSERT INTO `role_permission` (`role_id`, `p_id`, `create_time`, `update_time`)
+            SELECT 1, p_id, NOW(), NOW() FROM permission WHERE code = 'order';
+        </sql>
+    </changeSet>
+
+    <changeSet id="assign_order_sub_menus_to_admin" author="mik">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM role_permission WHERE p_id IN (SELECT p_id FROM permission WHERE code = 'order:unresolved')
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            INSERT INTO `role_permission` (`role_id`, `p_id`, `create_time`, `update_time`)
+            SELECT 1, p_id, NOW(), NOW() FROM permission WHERE code IN ('order:unresolved', 'order:history', 'order:all', 'order:setting');
+        </sql>
+    </changeSet>
+
+    <changeSet id="assign_order_to_dept_permission" author="mik">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM dept_permission WHERE p_id = (SELECT p_id FROM (SELECT p_id FROM permission WHERE code = 'order') t)
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            INSERT INTO `dept_permission` (`dept_id`, `p_id`, `create_time`, `update_time`)
+            SELECT d.dept_id, p.p_id, NOW(), NOW()
+            FROM department d, permission p
+            WHERE p.code IN ('order', 'order:unresolved', 'order:history', 'order:all', 'order:setting');
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

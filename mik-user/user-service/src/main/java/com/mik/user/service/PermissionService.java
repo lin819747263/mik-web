@@ -74,14 +74,15 @@ public class PermissionService extends ServiceImpl<PermissionMapper, Permission>
 
         List<PermissionDTO> allPermissions;
         if (user != null && user.getDeptId() != null) {
-            // 有部门时：取交集
+            // 有部门时：取并集
             List<PermissionDTO> deptPermissions = permissionMapper.listDeptPermission(user.getDeptId());
-            Set<Long> deptPermIds = deptPermissions.stream()
+            Set<Long> seenIds = rolePermissions.stream()
                     .map(PermissionDTO::getPId)
                     .collect(Collectors.toSet());
-            allPermissions = rolePermissions.stream()
-                    .filter(p -> deptPermIds.contains(p.getPId()))
-                    .collect(Collectors.toList());
+            allPermissions = new ArrayList<>(rolePermissions);
+            deptPermissions.stream()
+                    .filter(p -> !seenIds.contains(p.getPId()))
+                    .forEach(allPermissions::add);
         } else {
             // 没有部门时：只取角色权限
             allPermissions = new ArrayList<>(rolePermissions);
