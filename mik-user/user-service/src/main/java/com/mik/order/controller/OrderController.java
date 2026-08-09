@@ -9,8 +9,10 @@ import com.mik.order.dto.OrderStatusUpdateDTO;
 import com.mik.order.dto.OrderVO;
 import com.mik.order.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -87,8 +89,10 @@ public class OrderController {
             @RequestParam(required = false) Long assigneeId,
             @RequestParam(required = false) String orderNo,
             @RequestParam(required = false) Boolean urgent,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startTime,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endTime,
             PageInput page) {
-        PageResult<OrderVO> result = orderService.getAllOrders(status, dept, assigneeId, orderNo, urgent, page);
+        PageResult<OrderVO> result = orderService.getAllOrders(status, dept, assigneeId, orderNo, urgent, startTime, endTime, page);
         return Result.success(result);
     }
 

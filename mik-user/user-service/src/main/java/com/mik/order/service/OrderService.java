@@ -389,6 +389,10 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
             throw new ServiceException("当前状态不允许结办");
         }
 
+        // 记录原始结办人ID，退回时需要恢复
+        Long originalAssigneeId = order.getAssigneeId();
+        String originalAssigneeName = order.getAssigneeName();
+
         // 推进流程：完成 assignTask，流程进入 reviewTask
         if (order.getProcessInstanceId() != null) {
             try {
@@ -420,10 +424,11 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         order.setUpdatedAt(LocalDateTime.now());
         orderMapper.update(order);
 
-        // 记录时间线
+        // 记录时间线（将原始结办人ID存入描述，退回时用于恢复）
         String reviewerInfo = order.getReviewerName() != null ? "，审核人：" + order.getReviewerName() : "";
-        addTimeline(order.getId(), "结办", "reviewing",
-                (desc != null ? desc : "工单已结办，等待审核") + reviewerInfo, photos);
+        String timelineDesc = (desc != null ? desc : "工单已结办，等待审核") + reviewerInfo
+                + "[submitter:" + originalAssigneeId + ":" + (originalAssigneeName != null ? originalAssigneeName : "") + "]";
+        addTimeline(order.getId(), "结办", "reviewing", timelineDesc, photos);
 
         return convertToVO(order);
     }
@@ -516,6 +521,9 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
                 // 流程推进失败不影响状态更新
             }
         }
+
+        // 退回时将指派人恢复为结办人
+        restoreSubmitter(order);
 
         // 更新工单状态
         order.setStatus(newStatus);
@@ -635,7 +643,8 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
     /**
      * 查询所有工单（运维人员/管理员）
      */
-    public PageResult<OrderVO> getAllOrders(String status, String dept, Long assigneeId, String orderNo, Boolean urgent, PageInput page) {
+    public PageResult<OrderVO> getAllOrders(String status, String dept, Long assigneeId, String orderNo, Boolean urgent,
+                                            LocalDateTime startTime, LocalDateTime endTime, PageInput page) {
         Long userId = UserContext.getUserId();
 
         // 验证用户是否有运维权限
@@ -677,6 +686,14 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         // 根据紧急状态过滤
         if (urgent != null) {
             wrapper.and(new QueryColumn("urgent").eq(urgent ? 1 : 0));
+        }
+
+        // 根据时间范围过滤
+        if (startTime != null) {
+            wrapper.and(new QueryColumn("created_at").ge(startTime));
+        }
+        if (endTime != null) {
+            wrapper.and(new QueryColumn("created_at").le(endTime));
         }
 
         wrapper.orderBy(new QueryColumn("created_at").desc());
@@ -728,6 +745,45 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         List<RoleDTO> roles = roleService.listUserRoles(userId);
         return roles.stream().anyMatch(r ->
                 "operator".equals(r.getRoleName()) || "admin".equals(r.getRoleName()));
+    }
+
+    /**
+     * 从时间线中恢复结办人（退回时使用）
+     * 结办时间线描述格式：...[submitter:userId:userName]
+     */
+    private void restoreSubmitter(Order order) {
+        try {
+            List<OrderTimeline> timelines = orderTimelineMapper.selectListByCondition(
+                    QueryCondition.create(new QueryColumn("order_id"), "=", order.getId()));
+            // 查找最近的"结办"时间线
+            String submitterInfo = timelines.stream()
+                    .filter(t -> "结办".equals(t.getTitle()))
+                    .max(Comparator.comparing(OrderTimeline::getTime))
+                    .map(OrderTimeline::getDesc)
+                    .orElse(null);
+            if (submitterInfo != null) {
+                int markerStart = submitterInfo.lastIndexOf("[submitter:");
+                if (markerStart >= 0) {
+                    int markerEnd = submitterInfo.indexOf("]", markerStart);
+                    if (markerEnd > markerStart) {
+                        String[] parts = submitterInfo.substring(markerStart + 11, markerEnd).split(":");
+                        if (parts.length >= 1 && !parts[0].isEmpty()) {
+                            Long submitterId = Long.valueOf(parts[0]);
+                            order.setAssigneeId(submitterId);
+                            // 优先从用户表获取最新名称
+                            com.mik.user.entity.User submitter = userMapper.selectOneById(submitterId);
+                            String submitterName = submitter != null
+                                    ? (submitter.getNickname() != null ? submitter.getNickname() : submitter.getUsername())
+                                    : (parts.length >= 2 && !parts[1].isEmpty() ? parts[1] : null);
+                            order.setAssigneeName(submitterName);
+                            log.info("[restoreSubmitter] 恢复结办人: userId={}, name={}", submitterId, submitterName);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("[restoreSubmitter] 恢复结办人失败: {}", e.getMessage());
+        }
     }
 
     /**
