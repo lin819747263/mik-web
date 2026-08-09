@@ -1,5 +1,7 @@
 package com.mik.order.controller;
 
+import com.mik.core.pojo.PageInput;
+import com.mik.core.pojo.PageResult;
 import com.mik.core.pojo.Result;
 import com.mik.order.dto.OrderCreateDTO;
 import com.mik.order.dto.OrderRateDTO;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("v1/orders")
@@ -66,17 +69,27 @@ public class OrderController {
     }
 
     /**
+     * 获取工单统计数据
+     */
+    @GetMapping("/stats")
+    public Result<Map<String, Long>> getOrderStats() {
+        Map<String, Long> stats = orderService.getOrderStats();
+        return Result.success(stats);
+    }
+
+    /**
      * 查询所有工单（运维人员/管理员）
      */
     @GetMapping("/all")
-    public Result<List<OrderVO>> getAllOrders(
+    public Result<PageResult<OrderVO>> getAllOrders(
             @RequestParam(required = false, defaultValue = "all") String status,
             @RequestParam(required = false) String dept,
             @RequestParam(required = false) Long assigneeId,
             @RequestParam(required = false) String orderNo,
-            @RequestParam(required = false) Boolean urgent) {
-        List<OrderVO> orders = orderService.getAllOrders(status, dept, assigneeId, orderNo, urgent);
-        return Result.success(orders);
+            @RequestParam(required = false) Boolean urgent,
+            PageInput page) {
+        PageResult<OrderVO> result = orderService.getAllOrders(status, dept, assigneeId, orderNo, urgent, page);
+        return Result.success(result);
     }
 
     /**

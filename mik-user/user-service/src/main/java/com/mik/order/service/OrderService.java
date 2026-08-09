@@ -3,6 +3,8 @@ package com.mik.order.service;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.mik.core.exception.ServiceException;
+import com.mik.core.pojo.PageInput;
+import com.mik.core.pojo.PageResult;
 import com.mik.order.dto.OrderCreateDTO;
 import com.mik.order.dto.OrderRateDTO;
 import com.mik.order.dto.OrderStatusUpdateDTO;
@@ -600,9 +602,38 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
     }
 
     /**
+     * 获取工单统计数据
+     */
+    public Map<String, Long> getOrderStats() {
+        Long userId = UserContext.getUserId();
+        Map<String, Long> stats = new HashMap<>();
+
+        // 全部工单数
+        stats.put("total", orderMapper.selectCountByQuery(QueryWrapper.create().from("order")));
+
+        // 待受理数
+        stats.put("pending", orderMapper.selectCountByQuery(
+                QueryWrapper.create().from("order").where(new QueryColumn("status").eq("pending"))));
+
+        // 待处理数（指派给当前用户的 doing 状态）
+        List<String> doingStatuses = Arrays.asList("pending", "accepted", "assigned", "reviewing");
+        stats.put("doing", orderMapper.selectCountByQuery(
+                QueryWrapper.create().from("order")
+                        .where(new QueryColumn("status").in(doingStatuses))
+                        .and(new QueryColumn("assignee_id").eq(userId))));
+
+        // 已办结数
+        List<String> doneStatuses = Arrays.asList("done", "rated");
+        stats.put("done", orderMapper.selectCountByQuery(
+                QueryWrapper.create().from("order").where(new QueryColumn("status").in(doneStatuses))));
+
+        return stats;
+    }
+
+    /**
      * 查询所有工单（运维人员/管理员）
      */
-    public List<OrderVO> getAllOrders(String status, String dept, Long assigneeId, String orderNo, Boolean urgent) {
+    public PageResult<OrderVO> getAllOrders(String status, String dept, Long assigneeId, String orderNo, Boolean urgent, PageInput page) {
         Long userId = UserContext.getUserId();
 
         // 验证用户是否有运维权限
@@ -648,6 +679,10 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
 
         wrapper.orderBy(new QueryColumn("created_at").desc());
 
+        // 分页查询
+        long total = orderMapper.selectCountByQuery(wrapper);
+        wrapper.limit(page.getPageSize());
+        wrapper.offset((long) (page.getPageNum() - 1) * page.getPageSize());
         List<Order> orders = orderMapper.selectListByQuery(wrapper);
 
         // 批量查询所有相关用户，避免N+1查询
@@ -663,9 +698,11 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
 
         // 转换为VO，使用最新用户名称
         final java.util.Map<Long, com.mik.user.entity.User> finalUserMap = userMap;
-        return orders.stream()
+        List<OrderVO> voList = orders.stream()
                 .map(order -> convertToVO(order, finalUserMap))
                 .collect(Collectors.toList());
+
+        return new PageResult<>(total, voList);
     }
 
     // ==================== 辅助方法 ====================
