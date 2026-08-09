@@ -96,34 +96,6 @@ public class OrderFlowService {
     }
 
     /**
-     * 开始处理工单（只记录状态，不推进流程）
-     *
-     * @param processInstanceId 流程实例ID
-     * @param assigneeId        处理人ID
-     */
-    public void startProcess(String processInstanceId, Long assigneeId) {
-        // 不推进流程，只记录开始处理
-        log.info("工单开始处理, processInstanceId={}", processInstanceId);
-    }
-
-    /**
-     * 提交处理结果（待审核）
-     *
-     * @param processInstanceId 流程实例ID
-     * @param assigneeId        处理人ID
-     * @param desc              处理说明
-     */
-    public void submitReview(String processInstanceId, Long assigneeId, String desc) {
-        Task task = getTaskByDefinitionKey(processInstanceId, "processTask");
-
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("processDesc", desc);
-
-        taskService.complete(task.getId(), variables);
-        log.info("工单已提交审核, processInstanceId={}", processInstanceId);
-    }
-
-    /**
      * 审核工单
      *
      * @param processInstanceId 流程实例ID

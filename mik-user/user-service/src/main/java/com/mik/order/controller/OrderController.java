@@ -71,8 +71,11 @@ public class OrderController {
     @GetMapping("/all")
     public Result<List<OrderVO>> getAllOrders(
             @RequestParam(required = false, defaultValue = "all") String status,
-            @RequestParam(required = false) String dept) {
-        List<OrderVO> orders = orderService.getAllOrders(status, dept);
+            @RequestParam(required = false) String dept,
+            @RequestParam(required = false) Long assigneeId,
+            @RequestParam(required = false) String orderNo,
+            @RequestParam(required = false) Boolean urgent) {
+        List<OrderVO> orders = orderService.getAllOrders(status, dept, assigneeId, orderNo, urgent);
         return Result.success(orders);
     }
 

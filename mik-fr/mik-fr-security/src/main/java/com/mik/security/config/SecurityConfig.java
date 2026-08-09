@@ -104,7 +104,7 @@ public class SecurityConfig {
                             // 验证码接口公开
                             .requestMatchers("/captcha/**").permitAll()
                             // 小程序公开接口（不需要认证）
-                            .requestMatchers("/warranty/category/miniapp").permitAll()
+                            .requestMatchers("/v1/warranty/category/miniapp").permitAll()
                             .anyRequest().authenticated();
                 }).csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))

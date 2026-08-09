@@ -53,6 +53,16 @@ public class OrderSettingService extends ServiceImpl<OrderSettingMapper, OrderSe
     }
 
     /**
+     * 根据部门ID获取接收人
+     */
+    public OrderDeptReceiver getDeptReceiverByDeptId(Long deptId) {
+        return orderDeptReceiverMapper.selectOneByQuery(
+                QueryWrapper.create()
+                        .where(new QueryColumn("dept_id").eq(deptId))
+                        .limit(1));
+    }
+
+    /**
      * 保存部门接收人配置（全量更新）
      */
     @Transactional

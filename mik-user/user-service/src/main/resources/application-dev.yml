@@ -82,8 +82,9 @@ mik:
       - "/file/upload"
       - "/v1/auth/login"
       - "/v1/file/**"
-      - "/warranty/category/miniapp"
+      - "/v1/warranty/category/miniapp"
       - "/captcha/**"
+      - "/v1/warranty/category/miniapp"
     origins:
       - "http://192.168.31.92:5173"
       - "http://localhost:5173"

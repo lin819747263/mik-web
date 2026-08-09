@@ -8,6 +8,7 @@ import com.mik.order.dto.OrderRateDTO;
 import com.mik.order.dto.OrderStatusUpdateDTO;
 import com.mik.order.dto.OrderVO;
 import com.mik.order.entity.Order;
+import com.mik.order.entity.OrderDeptReceiver;
 import com.mik.order.entity.OrderSetting;
 import com.mik.order.entity.OrderTimeline;
 import com.mik.order.mapper.OrderMapper;
@@ -19,6 +20,7 @@ import com.mybatisflex.core.query.QueryColumn;
 import com.mybatisflex.core.query.QueryCondition;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.flowable.task.api.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class OrderService extends ServiceImpl<OrderMapper, Order> {
 
@@ -46,6 +49,12 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
 
     @Autowired
     private OrderSettingService orderSettingService;
+
+    @Autowired
+    private com.mik.warranty.service.WarrantyCategoryService warrantyCategoryService;
+
+    @Autowired
+    private com.mik.dept.mapper.DepartmentMapper departmentMapper;
 
     @Autowired
     private com.mik.user.mapper.UserMapper userMapper;
@@ -85,14 +94,86 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
 
         // 从工单设置中获取默认指派人员和审核人员
         OrderSetting setting = orderSettingService.getSetting();
-        if (setting.getDefaultAssigneeId() != null) {
-            order.setAssigneeId(setting.getDefaultAssigneeId());
-            order.setAssigneeName(setting.getDefaultAssigneeName());
+
+        // 优先根据部门查找接收人，如果没有则使用默认指派人
+        Long assigneeId = null;
+        String assigneeName = null;
+
+        // 1. 先根据分类查找部门负责人
+        if (dto.getCategoryId() != null) {
+            try {
+                Long categoryId = Long.valueOf(dto.getCategoryId());
+                // 获取分类对应的部门
+                com.mik.warranty.entity.WarrantyCategory category =
+                        warrantyCategoryService.getMapper().selectOneById(categoryId);
+                if (category != null) {
+                    // 获取部门ID（优先使用dept_id，如果没有则根据dept_name查找）
+                    Long deptId = category.getDeptId();
+                    if (deptId == null && category.getDeptName() != null && !category.getDeptName().isEmpty()) {
+                        // 根据部门名称查找部门
+                        com.mik.dept.entity.Department deptByName = departmentMapper.selectOneByQuery(
+                                com.mybatisflex.core.query.QueryWrapper.create()
+                                        .where(new com.mybatisflex.core.query.QueryColumn("dept_name").eq(category.getDeptName()))
+                                        .limit(1));
+                        if (deptByName != null) {
+                            deptId = deptByName.getDeptId();
+                        }
+                    }
+
+                    if (deptId != null) {
+                        // 优先使用部门表中的 receiver_id
+                        com.mik.dept.entity.Department dept = departmentMapper.selectOneById(deptId);
+                        if (dept != null && dept.getReceiverId() != null) {
+                            // 从部门表获取负责人
+                            com.mik.user.entity.User receiver = userMapper.selectOneById(dept.getReceiverId());
+                            if (receiver != null) {
+                                assigneeId = receiver.getUserId();
+                                assigneeName = receiver.getNickname() != null ? receiver.getNickname() : receiver.getUsername();
+                                log.info("[createOrder] 使用部门负责人: deptId={}, receiver={}", deptId, assigneeName);
+                            }
+                        }
+
+                        // 如果部门没有负责人，查找 order_dept_receiver 配置
+                        if (assigneeId == null) {
+                            OrderDeptReceiver deptReceiver = orderSettingService.getDeptReceiverByDeptId(deptId);
+                            if (deptReceiver != null) {
+                                assigneeId = deptReceiver.getReceiverId();
+                                // 从用户表获取最新名称
+                                com.mik.user.entity.User deptReceiverUser = userMapper.selectOneById(deptReceiver.getReceiverId());
+                                assigneeName = deptReceiverUser != null ? (deptReceiverUser.getNickname() != null ? deptReceiverUser.getNickname() : deptReceiverUser.getUsername()) : deptReceiver.getReceiverName();
+                                log.info("[createOrder] 使用部门接收人配置: deptId={}, receiver={}", deptId, assigneeName);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("[createOrder] 查找部门接收人失败: {}", e.getMessage());
+            }
+        }
+
+        // 2. 如果部门没有配置接收人，使用默认指派人
+        if (assigneeId == null && setting.getDefaultAssigneeId() != null) {
+            assigneeId = setting.getDefaultAssigneeId();
+            // 从用户表获取最新名称
+            com.mik.user.entity.User defaultAssignee = userMapper.selectOneById(setting.getDefaultAssigneeId());
+            assigneeName = defaultAssignee != null ? (defaultAssignee.getNickname() != null ? defaultAssignee.getNickname() : defaultAssignee.getUsername()) : setting.getDefaultAssigneeName();
+            log.info("[createOrder] 使用默认指派人: {}", assigneeName);
+        }
+
+        // 设置指派人
+        if (assigneeId != null) {
+            order.setAssigneeId(assigneeId);
+            order.setAssigneeName(assigneeName);
             order.setStatus("assigned");
         }
+
         if (setting.getDefaultReviewerId() != null) {
             order.setReviewerId(setting.getDefaultReviewerId());
-            order.setReviewerName(setting.getDefaultReviewerName());
+            // 从用户表获取最新名称
+            com.mik.user.entity.User defaultReviewer = userMapper.selectOneById(setting.getDefaultReviewerId());
+            String defaultReviewerName = defaultReviewer != null ? (defaultReviewer.getNickname() != null ? defaultReviewer.getNickname() : defaultReviewer.getUsername()) : setting.getDefaultReviewerName();
+            order.setReviewerName(defaultReviewerName);
+            log.info("[createOrder] 设置默认审核人: {}", defaultReviewerName);
         }
 
         orderMapper.insert(order);
@@ -102,6 +183,18 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
                 order.getId(), orderNo, userId);
         order.setProcessInstanceId(processInstanceId);
         orderMapper.update(order);
+
+        // 如果配置了默认指派人，自动推进流程到指派节点
+        // 流程: acceptTask -> assignTask（等待结办）
+        if (setting.getDefaultAssigneeId() != null) {
+            try {
+                // 自动完成受理节点
+                orderFlowService.acceptOrder(processInstanceId, userId, true, "系统自动受理");
+                log.info("流程已自动推进到指派节点, processInstanceId={}", processInstanceId);
+            } catch (Exception e) {
+                log.warn("自动推进流程失败: {}", e.getMessage());
+            }
+        }
 
         // 创建初始时间线
         addTimeline(order.getId(), "市民提交", "pending",
@@ -136,8 +229,22 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
                 .orderBy(new QueryColumn("created_at").desc());
 
         List<Order> orders = orderMapper.selectListByQuery(wrapper);
+
+        // 批量查询所有相关用户，避免N+1查询
+        java.util.Map<Long, com.mik.user.entity.User> userMap = new java.util.HashMap<>();
+        for (Order order : orders) {
+            if (order.getAssigneeId() != null) {
+                userMap.putIfAbsent(order.getAssigneeId(), userMapper.selectOneById(order.getAssigneeId()));
+            }
+            if (order.getReviewerId() != null) {
+                userMap.putIfAbsent(order.getReviewerId(), userMapper.selectOneById(order.getReviewerId()));
+            }
+        }
+
+        // 转换为VO，使用最新用户名称
+        final java.util.Map<Long, com.mik.user.entity.User> finalUserMap = userMap;
         return orders.stream()
-                .map(this::convertToVO)
+                .map(order -> convertToVO(order, finalUserMap))
                 .collect(Collectors.toList());
     }
 
@@ -246,6 +353,11 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
             order.setDept(deptName);
         }
         order.setAssigneeId(assigneeId);
+        // 从用户表获取最新名称，优先显示昵称
+        if (assigneeId != null) {
+            com.mik.user.entity.User assigneeUser = userMapper.selectOneById(assigneeId);
+            assigneeName = assigneeUser != null ? (assigneeUser.getNickname() != null ? assigneeUser.getNickname() : assigneeUser.getUsername()) : assigneeName;
+        }
         order.setAssigneeName(assigneeName);
         order.setStatus("assigned");
         order.setUpdatedAt(LocalDateTime.now());
@@ -261,34 +373,6 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
     }
 
     /**
-     * 开始处理
-     */
-    @Transactional
-    public OrderVO startProcess(String orderNo, String desc) {
-        Long userId = UserContext.getUserId();
-        Order order = getOrderByNo(orderNo);
-
-        // 验证状态
-        if (!"assigned".equals(order.getStatus())) {
-            throw new ServiceException("当前状态不允许开始处理");
-        }
-
-        // 推进流程
-        orderFlowService.startProcess(order.getProcessInstanceId(), userId);
-
-        // 更新工单状态
-        order.setStatus("processing");
-        order.setUpdatedAt(LocalDateTime.now());
-        orderMapper.update(order);
-
-        // 记录时间线
-        addTimeline(order.getId(), "处理中", "processing",
-                desc != null ? desc : "处理人员正在处理", null);
-
-        return convertToVO(order);
-    }
-
-    /**
      * 结办（提交审核）
      */
     @Transactional
@@ -296,26 +380,36 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         Long userId = UserContext.getUserId();
         Order order = getOrderByNo(orderNo);
 
-        // 验证状态
-        if (!"processing".equals(order.getStatus())) {
+        // 验证状态：assigned 或 processing 都允许结办
+        if (!"assigned".equals(order.getStatus()) && !"processing".equals(order.getStatus())) {
             throw new ServiceException("当前状态不允许结办");
         }
 
-        // 推进流程（容错处理）
+        // 推进流程：完成 assignTask，流程进入 reviewTask
         if (order.getProcessInstanceId() != null) {
             try {
-                orderFlowService.submitReview(order.getProcessInstanceId(), userId, desc);
+                orderFlowService.assignOrder(order.getProcessInstanceId(),
+                        userId, userId, null, desc);
             } catch (Exception e) {
-                // 流程推进失败不影响状态更新
+                log.warn("推进流程失败: {}", e.getMessage());
             }
         }
 
-        // 获取工单设置中的审核人员
+        // 获取工单设置中的审核人员，并将指派人切换为审核人
         OrderSetting setting = orderSettingService.getSetting();
-        if (setting.getDefaultReviewerId() != null) {
-            order.setReviewerId(setting.getDefaultReviewerId());
-            order.setReviewerName(setting.getDefaultReviewerName());
+
+        if (setting.getDefaultReviewerId() == null) {
+            throw new ServiceException("未配置默认审核人员，请在工单设置中配置后再操作");
         }
+        order.setReviewerId(setting.getDefaultReviewerId());
+        // 从用户表获取最新名称，避免使用 OrderSetting 中的旧名称
+        com.mik.user.entity.User reviewer = userMapper.selectOneById(setting.getDefaultReviewerId());
+        String reviewerName = reviewer != null ? (reviewer.getNickname() != null ? reviewer.getNickname() : reviewer.getUsername()) : setting.getDefaultReviewerName();
+        order.setReviewerName(reviewerName);
+        // 将 assigneeId 切换为审核人，使其出现在"待处理工单"中
+        order.setAssigneeId(setting.getDefaultReviewerId());
+        order.setAssigneeName(reviewerName);
+        log.info("[submitReview] 设置审核人为指派人: {}", reviewerName);
 
         // 更新工单状态
         order.setStatus("reviewing");
@@ -347,6 +441,11 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         // 验证状态
         if (!"reviewing".equals(order.getStatus())) {
             throw new ServiceException("当前状态不允许审核");
+        }
+
+        // 验证当前用户是否是工单指定的审核人员
+        if (order.getReviewerId() != null && !order.getReviewerId().equals(userId)) {
+            throw new ServiceException("只有工单指定的审核人员才能审核此工单");
         }
 
         // 推进流程（容错处理）
@@ -404,9 +503,15 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
             newStatus = "assigned"; // 退回至处理时，状态回到 assigned
         }
 
-        // 推进流程
-        orderFlowService.reviewOrder(order.getProcessInstanceId(),
-                userId, false, rejectTarget, desc);
+        // 推进流程（容错处理）
+        if (order.getProcessInstanceId() != null) {
+            try {
+                orderFlowService.reviewOrder(order.getProcessInstanceId(),
+                        userId, false, rejectTarget, desc);
+            } catch (Exception e) {
+                // 流程推进失败不影响状态更新
+            }
+        }
 
         // 更新工单状态
         order.setStatus(newStatus);
@@ -483,8 +588,6 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
                 return acceptOrder(orderNo, dto.getDesc());
             case "assigned":
                 return assignOrder(orderNo, null, dto.getDept(), null, null, dto.getDesc());
-            case "processing":
-                return startProcess(orderNo, dto.getDesc());
             case "reviewing":
                 return submitReview(orderNo, dto.getDesc(), dto.getPhotos());
             case "done":
@@ -499,7 +602,7 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
     /**
      * 查询所有工单（运维人员/管理员）
      */
-    public List<OrderVO> getAllOrders(String status, String dept) {
+    public List<OrderVO> getAllOrders(String status, String dept, Long assigneeId, String orderNo, Boolean urgent) {
         Long userId = UserContext.getUserId();
 
         // 验证用户是否有运维权限
@@ -528,11 +631,40 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
             wrapper.and(new QueryColumn("dept").eq(dept));
         }
 
+        // 根据指派人过滤
+        if (assigneeId != null) {
+            wrapper.and(new QueryColumn("assignee_id").eq(assigneeId));
+        }
+
+        // 根据工单号过滤
+        if (StrUtil.isNotBlank(orderNo)) {
+            wrapper.and(new QueryColumn("order_no").like("%" + orderNo + "%"));
+        }
+
+        // 根据紧急状态过滤
+        if (urgent != null) {
+            wrapper.and(new QueryColumn("urgent").eq(urgent ? 1 : 0));
+        }
+
         wrapper.orderBy(new QueryColumn("created_at").desc());
 
         List<Order> orders = orderMapper.selectListByQuery(wrapper);
+
+        // 批量查询所有相关用户，避免N+1查询
+        java.util.Map<Long, com.mik.user.entity.User> userMap = new java.util.HashMap<>();
+        for (Order order : orders) {
+            if (order.getAssigneeId() != null) {
+                userMap.putIfAbsent(order.getAssigneeId(), userMapper.selectOneById(order.getAssigneeId()));
+            }
+            if (order.getReviewerId() != null) {
+                userMap.putIfAbsent(order.getReviewerId(), userMapper.selectOneById(order.getReviewerId()));
+            }
+        }
+
+        // 转换为VO，使用最新用户名称
+        final java.util.Map<Long, com.mik.user.entity.User> finalUserMap = userMap;
         return orders.stream()
-                .map(this::convertToVO)
+                .map(order -> convertToVO(order, finalUserMap))
                 .collect(Collectors.toList());
     }
 
@@ -589,6 +721,10 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
      * 转换为VO
      */
     private OrderVO convertToVO(Order order) {
+        return convertToVO(order, null);
+    }
+
+    private OrderVO convertToVO(Order order, java.util.Map<Long, com.mik.user.entity.User> userMap) {
         OrderVO vo = new OrderVO();
         vo.setId(order.getOrderNo());
         vo.setCategoryId(order.getCategoryId());
@@ -607,9 +743,20 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         vo.setDept(order.getDept());
         vo.setDeptId(order.getDeptId());
         vo.setAssigneeId(order.getAssigneeId());
-        vo.setAssigneeName(order.getAssigneeName());
         vo.setReviewerId(order.getReviewerId());
-        vo.setReviewerName(order.getReviewerName());
+        // 从用户表实时获取最新名称，优先显示昵称（真实姓名）
+        if (order.getAssigneeId() != null) {
+            com.mik.user.entity.User assignee = userMap != null ? userMap.get(order.getAssigneeId()) : userMapper.selectOneById(order.getAssigneeId());
+            vo.setAssigneeName(assignee != null ? (assignee.getNickname() != null ? assignee.getNickname() : assignee.getUsername()) : order.getAssigneeName());
+        } else {
+            vo.setAssigneeName(order.getAssigneeName());
+        }
+        if (order.getReviewerId() != null) {
+            com.mik.user.entity.User reviewer = userMap != null ? userMap.get(order.getReviewerId()) : userMapper.selectOneById(order.getReviewerId());
+            vo.setReviewerName(reviewer != null ? (reviewer.getNickname() != null ? reviewer.getNickname() : reviewer.getUsername()) : order.getReviewerName());
+        } else {
+            vo.setReviewerName(order.getReviewerName());
+        }
         vo.setStatus(order.getStatus());
         vo.setScore(order.getScore());
         vo.setComment(order.getComment());

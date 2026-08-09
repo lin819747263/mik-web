@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/warranty/category")
+@RequestMapping("v1/warranty/category")
 public class WarrantyCategoryController {
 
     @Resource

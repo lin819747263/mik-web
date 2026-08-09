@@ -226,27 +226,7 @@ public class DepartmentService extends ServiceImpl<DepartmentMapper, Department>
     }
 
     private void checkTopDept(DeptCreateCommand command) {
-        // 如果创建/编辑为顶级部门，检查是否已存在其他顶级部门
-        if (command.getParentId() == null || command.getParentId() == 0) {
-            QueryWrapper wrapper = QueryWrapper.create()
-                    .select()
-                    .from("department")
-                    .where(new QueryColumn("parent_id").eq(0));
-
-            if (command.getDeptId() != null && command.getDeptId() > 0) {
-                // 编辑：排除自身，但保留 IS NULL 的记录
-                wrapper.and(new QueryColumn("dept_id").ne(command.getDeptId())
-                        .or(new QueryColumn("dept_id").isNull()));
-            } else {
-                // 新增：只查找已有记录
-                wrapper.and(new QueryColumn("dept_id").isNotNull());
-            }
-
-            Department exist = departmentMapper.selectOneByQuery(wrapper);
-            if (exist != null) {
-                throw new ServiceException("已存在顶级部门，只能有一个");
-            }
-        }
+        // 允许创建多个一级部门，不再限制
     }
 
     private List<DeptTreeDTO> buildTree(List<DeptTreeDTO> allDepts, Long parentId) {

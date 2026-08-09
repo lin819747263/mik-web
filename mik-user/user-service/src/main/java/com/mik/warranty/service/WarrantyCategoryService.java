@@ -95,9 +95,16 @@ public class WarrantyCategoryService extends ServiceImpl<WarrantyCategoryMapper,
                         .where(new QueryColumn("enable").eq(1))
                         .orderBy("sort asc"));
 
-        // 一级分类（首页展示）
-        List<Map<String, Object>> categories = all.stream()
-                .filter(c -> c.getLevel() == 1 && c.getShowOnHome() != null && c.getShowOnHome() == 1)
+        // 一级分类：优先返回设置了首页展示的，如果没有则返回所有一级分类
+        List<WarrantyCategory> level1List = all.stream()
+                .filter(c -> c.getLevel() == 1)
+                .collect(Collectors.toList());
+
+        boolean hasShowOnHome = level1List.stream()
+                .anyMatch(c -> c.getShowOnHome() != null && c.getShowOnHome() == 1);
+
+        List<Map<String, Object>> categories = level1List.stream()
+                .filter(c -> !hasShowOnHome || (c.getShowOnHome() != null && c.getShowOnHome() == 1))
                 .map(c -> {
                     Map<String, Object> map = new LinkedHashMap<>();
                     map.put("id", String.valueOf(c.getId()));

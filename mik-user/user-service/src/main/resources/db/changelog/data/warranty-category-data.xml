@@ -81,4 +81,10 @@
         </sql>
     </changeSet>
 
+    <changeSet id="update_warranty_category_show_on_home" author="mik">
+        <sql>
+            UPDATE `warranty_category` SET `show_on_home` = 1 WHERE `level` = 1 AND `parent_id` = 0;
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

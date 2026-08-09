@@ -26,10 +26,9 @@ import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.ArrayList;
@@ -166,7 +165,11 @@ public class UserController {
     }
 
     @PostMapping("/resetPassword")
-    public Result resetPassword(Long userId){
+    public Result resetPassword(@RequestBody Map<String, Object> body){
+        Long userId = body.get("userId") != null ? Long.valueOf(body.get("userId").toString()) : null;
+        if(userId == null){
+            throw new ServiceException("用户ID不能为空");
+        }
         if(userId == 1L || UserContext.getUserId().equals(userId)){
             throw new ServiceException(SecurityConstant.NO_PERMISSION);
         }

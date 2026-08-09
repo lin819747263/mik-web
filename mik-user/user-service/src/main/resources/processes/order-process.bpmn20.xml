@@ -34,18 +34,11 @@
       <documentation>部门主管将工单指派给具体处理人员</documentation>
     </userTask>
 
-    <!-- 处理任务：处理员执行处理 -->
-    <userTask id="processTask" name="处理工单"
-              flowable:assignee="${assigneeId}"
-              flowable:formKey="order/process">
-      <documentation>处理人员现场处理并提交结果</documentation>
-    </userTask>
-
-    <!-- 审核任务：审核员审核 -->
-    <userTask id="reviewTask" name="审核工单"
+    <!-- 审核任务：审核员审核结办 -->
+    <userTask id="reviewTask" name="审核结办"
               flowable:candidateGroups="reviewer"
               flowable:formKey="order/review">
-      <documentation>审核员审核处理结果</documentation>
+      <documentation>审核员审核工单并结办</documentation>
     </userTask>
 
     <!-- 结束事件 -->
@@ -73,11 +66,11 @@
       <documentation>工单已退回，请重新指派</documentation>
     </userTask>
 
-    <!-- 退回至处理 -->
+    <!-- 退回至处理（指派后重新审核） -->
     <userTask id="rejectToProcessTask" name="退回至处理"
-              flowable:assignee="${assigneeId}"
+              flowable:candidateGroups="leader"
               flowable:formKey="order/reject">
-      <documentation>工单已退回，请重新处理</documentation>
+      <documentation>工单已退回，请重新指派处理</documentation>
     </userTask>
 
     <!-- 流转连线 -->
@@ -97,11 +90,8 @@
       </conditionExpression>
     </sequenceFlow>
 
-    <!-- 指派完成 -> 处理 -->
-    <sequenceFlow id="flow3" sourceRef="assignTask" targetRef="processTask"/>
-
-    <!-- 处理完成 -> 审核 -->
-    <sequenceFlow id="flow4" sourceRef="processTask" targetRef="reviewTask"/>
+    <!-- 指派完成 -> 审核结办 -->
+    <sequenceFlow id="flow3" sourceRef="assignTask" targetRef="reviewTask"/>
 
     <!-- 审核通过 -> 结束 -->
     <sequenceFlow id="flow5" sourceRef="reviewTask" targetRef="end">
@@ -133,11 +123,11 @@
     <!-- 退回至受理 -> 指派 -->
     <sequenceFlow id="rejectFlow1" sourceRef="rejectToAcceptTask" targetRef="assignTask"/>
 
-    <!-- 退回至指派 -> 处理 -->
-    <sequenceFlow id="rejectFlow2" sourceRef="rejectToAssignTask" targetRef="processTask"/>
+    <!-- 退回至指派 -> 指派 -->
+    <sequenceFlow id="rejectFlow2" sourceRef="rejectToAssignTask" targetRef="assignTask"/>
 
-    <!-- 退回至处理 -> 审核 -->
-    <sequenceFlow id="rejectFlow3" sourceRef="rejectToProcessTask" targetRef="reviewTask"/>
+    <!-- 退回至处理 -> 指派 -->
+    <sequenceFlow id="rejectFlow3" sourceRef="rejectToProcessTask" targetRef="assignTask"/>
 
   </process>
 
@@ -151,9 +141,6 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="assignTask" id="BPMNShape_assignTask">
         <omgdc:Bounds height="80.0" width="100.0" x="360.0" y="138.0"/>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="processTask" id="BPMNShape_processTask">
-        <omgdc:Bounds height="80.0" width="100.0" x="525.0" y="138.0"/>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="reviewTask" id="BPMNShape_reviewTask">
         <omgdc:Bounds height="80.0" width="100.0" x="690.0" y="138.0"/>
