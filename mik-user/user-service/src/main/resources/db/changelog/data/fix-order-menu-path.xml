@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <!-- 第一步：删除所有工单相关的权限数据 -->
+    <changeSet id="delete_all_order_permissions" author="mik">
+        <sql>
+            -- 1. 删除角色权限关联
+            DELETE FROM role_permission WHERE p_id IN (
+                SELECT p_id FROM permission WHERE code LIKE 'order%'
+            );
+
+            -- 2. 删除部门权限关联
+            DELETE FROM dept_permission WHERE p_id IN (
+                SELECT p_id FROM permission WHERE code LIKE 'order%'
+            );
+
+            -- 3. 删除所有工单权限（包括父权限和子权限）
+            DELETE FROM permission WHERE code LIKE 'order%';
+
+            -- 4. 清理 Liquibase 执行记录
+            DELETE FROM databasechangelog WHERE id IN (
+                'add_order_sub_menus',
+                'assign_order_menu_to_admin',
+                'assign_order_sub_menus_to_admin',
+                'assign_order_to_dept_permission',
+                'fix_order_menu_path',
+                'ensure_order_parent_permission',
+                'fix_order_menu_path_v2',
+                'fix_order_sub_menus_v2',
+                'fix_order_role_permission_v2',
+                'clean_old_order_changesets',
+                'fix_order_permission_all_in_one'
+            );
+        </sql>
+    </changeSet>
+
+    <!-- 第二步：重新创建工单父权限 -->
+    <changeSet id="create_order_parent_menu" author="mik">
+        <sql>
+            INSERT INTO `permission` (`code`, `name`, `type`, `parent`, `icon`, `path`, `sort`, `create_time`, `update_time`)
+            VALUES ('order', '工单管理', 0, 0, 'Tickets', '/home/order', 0, NOW(), NOW());
+        </sql>
+    </changeSet>
+
+    <!-- 第三步：创建工单子菜单 -->
+    <changeSet id="create_order_sub_menus" author="mik">
+        <sql>
+            INSERT INTO `permission` (`code`, `name`, `type`, `parent`, `icon`, `path`, `sort`, `create_time`, `update_time`)
+            SELECT 'order:unresolved', '待处理工单', 1, p_id, 'WarningFilled', '', 1, NOW(), NOW()
+            FROM permission WHERE code = 'order';
+
+            INSERT INTO `permission` (`code`, `name`, `type`, `parent`, `icon`, `path`, `sort`, `create_time`, `update_time`)
+            SELECT 'order:history', '历史工单', 1, p_id, 'Clock', '', 2, NOW(), NOW()
+            FROM permission WHERE code = 'order';
+
+            INSERT INTO `permission` (`code`, `name`, `type`, `parent`, `icon`, `path`, `sort`, `create_time`, `update_time`)
+            SELECT 'order:all', '全部工单', 1, p_id, 'List', '', 3, NOW(), NOW()
+            FROM permission WHERE code = 'order';
+
+            INSERT INTO `permission` (`code`, `name`, `type`, `parent`, `icon`, `path`, `sort`, `create_time`, `update_time`)
+            SELECT 'order:setting', '工单设置', 1, p_id, 'Setting', '', 4, NOW(), NOW()
+            FROM permission WHERE code = 'order';
+        </sql>
+    </changeSet>
+
+    <!-- 第四步：分配工单权限给管理员角色 -->
+    <changeSet id="assign_order_to_admin" author="mik">
+        <sql>
+            -- 分配父权限
+            INSERT INTO `role_permission` (`role_id`, `p_id`, `create_time`, `update_time`)
+            SELECT 1, p_id, NOW(), NOW() FROM permission WHERE code = 'order';
+
+            -- 分配子权限
+            INSERT INTO `role_permission` (`role_id`, `p_id`, `create_time`, `update_time`)
+            SELECT 1, p_id, NOW(), NOW() FROM permission WHERE code IN ('order:unresolved', 'order:history', 'order:all', 'order:setting');
+        </sql>
+    </changeSet>
+
+    <!-- 第五步：分配工单权限给部门 -->
+    <changeSet id="assign_order_to_departments" author="mik">
+        <sql>
+            INSERT INTO `dept_permission` (`dept_id`, `p_id`, `create_time`, `update_time`)
+            SELECT d.dept_id, p.p_id, NOW(), NOW()
+            FROM department d, permission p
+            WHERE p.code IN ('order', 'order:unresolved', 'order:history', 'order:all', 'order:setting');
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

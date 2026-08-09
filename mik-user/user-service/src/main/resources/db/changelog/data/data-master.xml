@@ -12,6 +12,6 @@
     <include file="classpath:db/changelog/data/permission-dept-data.xml"/>
     <include file="classpath:db/changelog/data/warranty-menu-data.xml"/>
     <include file="classpath:db/changelog/data/warranty-category-data.xml"/>
-    <include file="classpath:db/changelog/data/order-menu-data.xml"/>
+    <include file="classpath:db/changelog/data/fix-order-menu-path.xml"/>
 
 </databaseChangeLog>

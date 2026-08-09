@@ -92,13 +92,53 @@ public class PermissionService extends ServiceImpl<PermissionMapper, Permission>
         Map<Long, PermissionDTO> collect = allPermissions.stream()
                 .collect(Collectors.toMap(PermissionDTO::getPId, Function.identity()));
 
+        // 收集缺失的父节点ID，用于自动补全
+        Set<Long> missingParentIds = new HashSet<>();
+
         allPermissions.forEach(x -> {
             if(x.getParent() == 0) {
                 tree.add(x);
             } else if (collect.containsKey(x.getParent())) {
                 collect.get(x.getParent()).getChildren().add(x);
+            } else {
+                // 父节点不在权限列表中，记录需要补全的父节点ID
+                missingParentIds.add(x.getParent());
             }
         });
+
+        // 自动补全缺失的父节点（从数据库查询）
+        if (!missingParentIds.isEmpty()) {
+            List<Permission> missingParents = permissionMapper.selectListByIds(missingParentIds);
+            Map<Long, PermissionDTO> parentMap = new HashMap<>();
+
+            for (Permission p : missingParents) {
+                PermissionDTO dto = new PermissionDTO();
+                BeanUtils.copyProperties(p, dto);
+                parentMap.put(p.getPId(), dto);
+                collect.put(p.getPId(), dto);
+            }
+
+            // 重新挂载子节点到补全的父节点
+            allPermissions.forEach(x -> {
+                if (x.getParent() != 0 && parentMap.containsKey(x.getParent()) &&
+                        !parentMap.get(x.getParent()).getChildren().contains(x)) {
+                    parentMap.get(x.getParent()).getChildren().add(x);
+                }
+            });
+
+            // 将补全的父节点挂到根节点或加入树
+            parentMap.values().forEach(parent -> {
+                if (parent.getParent() == 0) {
+                    tree.add(parent);
+                } else if (collect.containsKey(parent.getParent())) {
+                    collect.get(parent.getParent()).getChildren().add(parent);
+                } else {
+                    // 如果补全的父节点的父节点也缺失，直接加入根
+                    tree.add(parent);
+                }
+            });
+        }
+
         tree.sort(Comparator.comparingInt(PermissionDTO::getSort).reversed());
         return tree;
     }
