@@ -243,10 +243,10 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
             }
         }
 
-        // 转换为VO，使用最新用户名称
+        // 转换为VO，使用最新用户名称（列表视图不加载时间线和流程信息）
         final java.util.Map<Long, com.mik.user.entity.User> finalUserMap = userMap;
         return orders.stream()
-                .map(order -> convertToVO(order, finalUserMap))
+                .map(order -> convertToVO(order, finalUserMap, false))
                 .collect(Collectors.toList());
     }
 
@@ -266,7 +266,8 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
             throw new ServiceException("无权查看此工单");
         }
 
-        return convertToVO(order);
+        // 详情视图加载时间线和流程信息
+        return convertToVO(order, null, true);
     }
 
     /**
@@ -282,7 +283,8 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
             throw new ServiceException("无权查看此工单");
         }
 
-        return convertToVO(order);
+        // 详情视图加载时间线和流程信息
+        return convertToVO(order, null, true);
     }
 
     /**
@@ -382,8 +384,8 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         Long userId = UserContext.getUserId();
         Order order = getOrderByNo(orderNo);
 
-        // 验证状态：assigned 或 processing 都允许结办
-        if (!"assigned".equals(order.getStatus()) && !"processing".equals(order.getStatus())) {
+        // 验证状态
+        if (!"assigned".equals(order.getStatus())) {
             throw new ServiceException("当前状态不允许结办");
         }
 
@@ -696,10 +698,10 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
             }
         }
 
-        // 转换为VO，使用最新用户名称
+        // 转换为VO，使用最新用户名称（列表视图不加载时间线和流程信息）
         final java.util.Map<Long, com.mik.user.entity.User> finalUserMap = userMap;
         List<OrderVO> voList = orders.stream()
-                .map(order -> convertToVO(order, finalUserMap))
+                .map(order -> convertToVO(order, finalUserMap, false))
                 .collect(Collectors.toList());
 
         return new PageResult<>(total, voList);
@@ -755,13 +757,16 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
     }
 
     /**
-     * 转换为VO
+     * 转换为VO（详情视图，含时间线和流程信息）
      */
     private OrderVO convertToVO(Order order) {
-        return convertToVO(order, null);
+        return convertToVO(order, null, true);
     }
 
-    private OrderVO convertToVO(Order order, java.util.Map<Long, com.mik.user.entity.User> userMap) {
+    /**
+     * 转换为VO（列表视图，可选跳过时间线和流程查询）
+     */
+    private OrderVO convertToVO(Order order, java.util.Map<Long, com.mik.user.entity.User> userMap, boolean loadDetail) {
         OrderVO vo = new OrderVO();
         vo.setId(order.getOrderNo());
         vo.setCategoryId(order.getCategoryId());
@@ -799,32 +804,35 @@ public class OrderService extends ServiceImpl<OrderMapper, Order> {
         vo.setComment(order.getComment());
         vo.setCreatedAt(order.getCreatedAt().format(FORMATTER));
 
-        // 查询时间线
-        List<OrderTimeline> timelines = orderTimelineMapper.selectListByCondition(
-                QueryCondition.create(new QueryColumn("order_id"), "=", order.getId()));
+        // 仅详情视图加载时间线和流程信息
+        if (loadDetail) {
+            // 查询时间线
+            List<OrderTimeline> timelines = orderTimelineMapper.selectListByCondition(
+                    QueryCondition.create(new QueryColumn("order_id"), "=", order.getId()));
 
-        List<OrderVO.TimelineVO> timelineVOs = timelines.stream()
-                .sorted(Comparator.comparing(OrderTimeline::getTime))
-                .map(t -> {
-                    OrderVO.TimelineVO tvo = new OrderVO.TimelineVO();
-                    tvo.setT(t.getTime().format(FORMATTER));
-                    tvo.setTitle(t.getTitle());
-                    tvo.setDesc(t.getDesc());
-                    tvo.setStatus(t.getStatus());
-                    if (t.getPhotos() != null && !t.getPhotos().isEmpty()) {
-                        tvo.setPhotos(JSON.parseArray(t.getPhotos(), String.class));
-                    }
-                    return tvo;
-                })
-                .collect(Collectors.toList());
-        vo.setTimeline(timelineVOs);
+            List<OrderVO.TimelineVO> timelineVOs = timelines.stream()
+                    .sorted(Comparator.comparing(OrderTimeline::getTime))
+                    .map(t -> {
+                        OrderVO.TimelineVO tvo = new OrderVO.TimelineVO();
+                        tvo.setT(t.getTime().format(FORMATTER));
+                        tvo.setTitle(t.getTitle());
+                        tvo.setDesc(t.getDesc());
+                        tvo.setStatus(t.getStatus());
+                        if (t.getPhotos() != null && !t.getPhotos().isEmpty()) {
+                            tvo.setPhotos(JSON.parseArray(t.getPhotos(), String.class));
+                        }
+                        return tvo;
+                    })
+                    .collect(Collectors.toList());
+            vo.setTimeline(timelineVOs);
 
-        // 获取当前流程任务信息
-        if (order.getProcessInstanceId() != null) {
-            Task currentTask = orderFlowService.getCurrentTask(order.getProcessInstanceId());
-            if (currentTask != null) {
-                vo.setCurrentTaskName(currentTask.getName());
-                vo.setCurrentTaskAssignee(currentTask.getAssignee());
+            // 获取当前流程任务信息
+            if (order.getProcessInstanceId() != null) {
+                Task currentTask = orderFlowService.getCurrentTask(order.getProcessInstanceId());
+                if (currentTask != null) {
+                    vo.setCurrentTaskName(currentTask.getName());
+                    vo.setCurrentTaskAssignee(currentTask.getAssignee());
+                }
             }
         }
 

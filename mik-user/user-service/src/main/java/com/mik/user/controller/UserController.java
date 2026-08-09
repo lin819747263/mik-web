@@ -1,6 +1,5 @@
 package com.mik.user.controller;
 
-import cn.hutool.core.util.StrUtil;
 import com.mik.core.exception.ServiceException;
 import com.mik.core.pojo.PageInput;
 import com.mik.core.pojo.Result;
@@ -10,47 +9,36 @@ import com.mik.security.UserContext;
 import com.mik.sys.OperationLog;
 import com.mik.user.controller.cqe.UserRegisterInput;
 import com.mik.user.dto.UserCreateDTO;
-import com.mik.user.dto.UserDTO;
 import com.mik.user.dto.UserQuery;
 import com.mik.user.entity.User;
 import com.mik.user.service.UserService;
+import com.mik.user.service.RoleService;
+import com.mik.user.controller.cqe.RoleDTO;
 import com.mybatisflex.core.query.QueryColumn;
 import com.mybatisflex.core.query.QueryCondition;
 import com.mybatisflex.core.query.QueryWrapper;
-import org.apache.commons.lang3.StringUtils;
-import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.Cursor;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ScanOptions;
-import org.springframework.http.MediaType;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/user")
 public class UserController {
 
     @Autowired
-    UserService userService;
+    private UserService userService;
 
     @Autowired
-    RedisTemplate redisTemplate;
-
-    @Autowired
-    RedissonClient redissonClient;
+    private RoleService roleService;
 
     @Autowired
     private PasswordEncoder encoder;
+
+    @Autowired
+    private com.mik.dept.mapper.DepartmentMapper departmentMapper;
 
 
     @OperationLog(operation = "创建/编辑用户")
@@ -93,7 +81,7 @@ public class UserController {
     }
 
     @GetMapping("/listByConditionPage")
-    public Result listByConditionPage(UserQuery query,PageInput pageInput){
+    public Result listByConditionPage(UserQuery query, PageInput pageInput){
         return Result.success(userService.listByConditionPage(query, pageInput));
     }
 
@@ -102,10 +90,11 @@ public class UserController {
      */
     @GetMapping("/simpleList")
     public Result simpleList() {
-        List<User> users = userService.getMapper().selectAll();
-        List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
+        List<User> users = userService.getMapper().selectListByQuery(
+                QueryWrapper.create().select().from("user").limit(500));
+        List<Map<String, Object>> list = new ArrayList<>();
         for (User u : users) {
-            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            Map<String, Object> map = new HashMap<>();
             map.put("userId", u.getUserId());
             map.put("username", u.getUsername());
             map.put("nickname", u.getNickname());
@@ -114,9 +103,6 @@ public class UserController {
         }
         return Result.success(list);
     }
-
-    @Autowired
-    com.mik.dept.mapper.DepartmentMapper departmentMapper;
 
     /**
      * 按部门查询用户列表（含子部门）
@@ -125,19 +111,20 @@ public class UserController {
     public Result listByDept(Long deptId) {
         List<User> users;
         if (deptId == null) {
-            users = userService.getMapper().selectAll();
+            users = userService.getMapper().selectListByQuery(
+                    QueryWrapper.create().select().from("user").limit(500));
         } else {
-            List<Long> deptIds = new java.util.ArrayList<>();
+            List<Long> deptIds = new ArrayList<>();
             deptIds.add(deptId);
             collectChildDeptIds(deptId, deptIds);
-            com.mybatisflex.core.query.QueryWrapper wrapper = com.mybatisflex.core.query.QueryWrapper.create()
+            QueryWrapper wrapper = QueryWrapper.create()
                     .select().from("user")
-                    .where(new com.mybatisflex.core.query.QueryColumn("dept_id").in(deptIds));
+                    .where(new QueryColumn("dept_id").in(deptIds));
             users = userService.getMapper().selectListByQuery(wrapper);
         }
-        List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
+        List<Map<String, Object>> list = new ArrayList<>();
         for (User u : users) {
-            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            Map<String, Object> map = new HashMap<>();
             map.put("userId", u.getUserId());
             map.put("username", u.getUsername());
             map.put("nickname", u.getNickname());
@@ -147,14 +134,24 @@ public class UserController {
         return Result.success(list);
     }
 
+    /**
+     * 递归收集子部门ID（一次性查询所有部门，内存中递归）
+     */
     private void collectChildDeptIds(Long parentId, List<Long> ids) {
-        com.mybatisflex.core.query.QueryWrapper wrapper = com.mybatisflex.core.query.QueryWrapper.create()
-                .select("dept_id").from("department")
-                .where(new com.mybatisflex.core.query.QueryColumn("parent_id").eq(parentId));
-        List<com.mik.dept.entity.Department> depts = departmentMapper.selectListByQuery(wrapper);
-        for (com.mik.dept.entity.Department dept : depts) {
-            ids.add(dept.getDeptId());
-            collectChildDeptIds(dept.getDeptId(), ids);
+        List<com.mik.dept.entity.Department> allDepts = departmentMapper.selectListByQuery(
+                QueryWrapper.create().select("dept_id", "parent_id").from("department"));
+        Map<Long, List<Long>> parentChildMap = allDepts.stream()
+                .collect(Collectors.groupingBy(
+                        com.mik.dept.entity.Department::getParentId,
+                        Collectors.mapping(com.mik.dept.entity.Department::getDeptId, Collectors.toList())));
+        collectChildIdsRecursive(parentId, ids, parentChildMap);
+    }
+
+    private void collectChildIdsRecursive(Long parentId, List<Long> ids, Map<Long, List<Long>> parentChildMap) {
+        List<Long> children = parentChildMap.getOrDefault(parentId, Collections.emptyList());
+        for (Long childId : children) {
+            ids.add(childId);
+            collectChildIdsRecursive(childId, ids, parentChildMap);
         }
     }
 
@@ -164,6 +161,7 @@ public class UserController {
         return Result.success();
     }
 
+    @OperationLog(operation = "重置密码")
     @PostMapping("/resetPassword")
     public Result resetPassword(@RequestBody Map<String, Object> body){
         Long userId = body.get("userId") != null ? Long.valueOf(body.get("userId").toString()) : null;
@@ -171,6 +169,12 @@ public class UserController {
             throw new ServiceException("用户ID不能为空");
         }
         if(userId == 1L || UserContext.getUserId().equals(userId)){
+            throw new ServiceException(SecurityConstant.NO_PERMISSION);
+        }
+        // 校验调用者是否为管理员
+        List<RoleDTO> roles = roleService.listUserRoles(UserContext.getUserId());
+        boolean isAdmin = roles.stream().anyMatch(r -> "admin".equals(r.getRoleName()));
+        if (!isAdmin) {
             throw new ServiceException(SecurityConstant.NO_PERMISSION);
         }
         User user = userService.getMapper().selectOneById(userId);
@@ -194,7 +198,7 @@ public class UserController {
 
     @OperationLog(operation = "用户注册")
     @PostMapping("/register")
-    public Result register(UserRegisterInput  input){
+    public Result register(UserRegisterInput input){
         User user = userService.getMapper().selectOneByCondition(
                 QueryCondition.create(new QueryColumn("mobile"), "=", input.getMobile()));
         if(user != null){
@@ -205,48 +209,6 @@ public class UserController {
         createDTO.setPassword(encoder.encode(input.getPassword()));
         userService.saveOrUpdate(createDTO);
         return Result.success();
-    }
-
-
-    @GetMapping("/redis")
-    public Result listByConditionPage() throws InterruptedException {
-        if(!redissonClient.getLock("888").tryLock(3, TimeUnit.SECONDS)){
-            throw new ServiceException("获取锁失败");
-        }
-        try {
-            redisTemplate.opsForValue().set("redission", "redission");
-            TimeUnit.SECONDS.sleep(10L);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } finally {
-            redissonClient.getLock("888").unlock();
-        }
-
-        return Result.success();
-    }
-
-
-    @GetMapping(value = "/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter sse() throws InterruptedException {
-        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
-
-        Executors.newSingleThreadExecutor().execute(() -> {
-            try {
-                for (int i = 0; i < 300; i++) {
-                    SseEmitter.SseEventBuilder event = SseEmitter.event()
-                            .data("SSE MVC - " + i)
-                            .id(String.valueOf(i))
-                            .name("sse event");
-                    emitter.send(event);
-                    Thread.sleep(1000);
-                }
-                emitter.complete();
-            } catch (Exception ex) {
-                emitter.completeWithError(ex);
-            }
-        });
-
-        return emitter;
     }
 
 }

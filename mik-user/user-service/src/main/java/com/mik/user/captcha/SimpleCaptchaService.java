@@ -10,8 +10,8 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
-import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,15 +29,13 @@ public class SimpleCaptchaService {
     private static final int IMAGE_WIDTH = 150;
     private static final int IMAGE_HEIGHT = 50;
 
-    private final Random random = new Random();
-
     /**
      * 生成验证码
      * @return [captchaId, base64Image]
      */
     public CaptchaResult generateCaptcha() {
         // 生成随机验证码（4位数字）
-        String code = String.format("%04d", random.nextInt(10000));
+        String code = String.format("%04d", ThreadLocalRandom.current().nextInt(10000));
         String captchaId = UUID.randomUUID().toString();
 
         // 存储到 Redis
@@ -91,11 +89,12 @@ public class SimpleCaptchaService {
      * 生成验证码图片
      */
     private String generateImage(String code) {
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
         BufferedImage image = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = image.createGraphics();
 
         // 设置背景
-        g.setColor(getRandomColor(200, 250));
+        g.setColor(getRandomColor(200, 250, rnd));
         g.fillRect(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
 
         // 设置字体
@@ -103,19 +102,19 @@ public class SimpleCaptchaService {
 
         // 画干扰线
         for (int i = 0; i < 5; i++) {
-            g.setColor(getRandomColor(160, 200));
-            int x1 = random.nextInt(IMAGE_WIDTH);
-            int y1 = random.nextInt(IMAGE_HEIGHT);
-            int x2 = random.nextInt(IMAGE_WIDTH);
-            int y2 = random.nextInt(IMAGE_HEIGHT);
+            g.setColor(getRandomColor(160, 200, rnd));
+            int x1 = rnd.nextInt(IMAGE_WIDTH);
+            int y1 = rnd.nextInt(IMAGE_HEIGHT);
+            int x2 = rnd.nextInt(IMAGE_WIDTH);
+            int y2 = rnd.nextInt(IMAGE_HEIGHT);
             g.drawLine(x1, y1, x2, y2);
         }
 
         // 画验证码
         for (int i = 0; i < code.length(); i++) {
-            g.setColor(getRandomColor(20, 130));
+            g.setColor(getRandomColor(20, 130, rnd));
             int x = 20 + i * 30;
-            int y = 35 + random.nextInt(10);
+            int y = 35 + rnd.nextInt(10);
             g.drawString(String.valueOf(code.charAt(i)), x, y);
         }
 
@@ -135,10 +134,10 @@ public class SimpleCaptchaService {
     /**
      * 获取随机颜色
      */
-    private Color getRandomColor(int min, int max) {
-        int r = min + random.nextInt(max - min);
-        int g = min + random.nextInt(max - min);
-        int b = min + random.nextInt(max - min);
+    private Color getRandomColor(int min, int max, ThreadLocalRandom rnd) {
+        int r = min + rnd.nextInt(max - min);
+        int g = min + rnd.nextInt(max - min);
+        int b = min + rnd.nextInt(max - min);
         return new Color(r, g, b);
     }
 

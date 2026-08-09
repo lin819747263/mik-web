@@ -47,9 +47,6 @@ public class DepartmentService extends ServiceImpl<DepartmentMapper, Department>
         // 校验层级不超过3级
         checkLevel(command);
 
-        // 校验只有一个顶级部门
-        checkTopDept(command);
-
         Department dept = new Department();
         BeanUtils.copyProperties(command, dept);
 
@@ -223,10 +220,6 @@ public class DepartmentService extends ServiceImpl<DepartmentMapper, Department>
                 throw new ServiceException("最多支持三级部门");
             }
         }
-    }
-
-    private void checkTopDept(DeptCreateCommand command) {
-        // 允许创建多个一级部门，不再限制
     }
 
     private List<DeptTreeDTO> buildTree(List<DeptTreeDTO> allDepts, Long parentId) {

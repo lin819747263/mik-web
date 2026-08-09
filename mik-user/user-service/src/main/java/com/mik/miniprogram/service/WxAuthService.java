@@ -43,13 +43,19 @@ public class WxAuthService {
     private RoleService roleService;
 
     @Autowired
-    private RedisTemplate redisTemplate;
+    private RedisTemplate<String, String> redisTemplate;
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     @Value("${wx.appid:}")
     private String appid;
 
     @Value("${wx.secret:}")
     private String secret;
+
+    @Value("${jwt.secret:mik-default-secret-key-at-least-32bytes}")
+    private String jwtSecret;
 
     private static final String WX_LOGIN_URL = "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code";
 
@@ -80,9 +86,9 @@ public class WxAuthService {
             wxUser.setCreatedAt(LocalDateTime.now());
             wxUser.setUpdatedAt(LocalDateTime.now());
 
-            // 创建系统用户
+            // 创建系统用户（使用完整 openid 避免碰撞）
             User user = new User();
-            user.setUsername("wx_" + openid.substring(0, 8));
+            user.setUsername("wx_" + openid);
             user.setMobile("");
             user.setEmail("");
             user.setPassword("");
@@ -159,7 +165,6 @@ public class WxAuthService {
      */
     private JSONObject getWxSession(String code) {
         String url = String.format(WX_LOGIN_URL, appid, secret, code);
-        RestTemplate restTemplate = new RestTemplate();
         try {
             String result = restTemplate.getForObject(url, String.class);
             return JSONObject.parseObject(result);
@@ -177,9 +182,8 @@ public class WxAuthService {
         claims.put("type", "miniprogram");
         claims.put("iat", new Date());
 
-        String secretKey = Base64.getEncoder().encodeToString("mik".getBytes(StandardCharsets.UTF_8));
+        String secretKey = Base64.getEncoder().encodeToString(jwtSecret.getBytes(StandardCharsets.UTF_8));
 
-        // 设置过期时间7天
         long expirationTime = 7 * 24 * 60 * 60 * 1000;
         Date expirationDate = new Date(System.currentTimeMillis() + expirationTime);
 
@@ -200,9 +204,8 @@ public class WxAuthService {
         claims.put("type", "miniprogram");
         claims.put("iat", new Date());
 
-        String secretKey = Base64.getEncoder().encodeToString("mik".getBytes(StandardCharsets.UTF_8));
+        String secretKey = Base64.getEncoder().encodeToString(jwtSecret.getBytes(StandardCharsets.UTF_8));
 
-        // 设置过期时间7天
         long expirationTime = 7 * 24 * 60 * 60 * 1000;
         Date expirationDate = new Date(System.currentTimeMillis() + expirationTime);
 

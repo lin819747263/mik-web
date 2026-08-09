@@ -22,7 +22,7 @@ public class WxAuthController {
      * POST /auth/login
      */
     @PostMapping("/login")
-    public WxLoginVO login(@RequestBody WxLoginDTO dto) {
-        return wxAuthService.login(dto);
+    public Result<WxLoginVO> login(@RequestBody WxLoginDTO dto) {
+        return Result.success(wxAuthService.login(dto));
     }
 }

@@ -1,11 +1,16 @@
 package com.mik.dept.controller;
 
+import com.mik.core.exception.ServiceException;
 import com.mik.core.pojo.Result;
 import com.mik.dept.dto.DeptCreateCommand;
 import com.mik.dept.dto.DeptDTO;
 import com.mik.dept.dto.DeptTreeDTO;
 import com.mik.dept.service.DepartmentService;
+import com.mik.exception.SecurityConstant;
+import com.mik.security.UserContext;
 import com.mik.sys.OperationLog;
+import com.mik.user.controller.cqe.RoleDTO;
+import com.mik.user.service.RoleService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +24,9 @@ public class DepartmentController {
 
     @Resource
     private DepartmentService departmentService;
+
+    @Resource
+    private RoleService roleService;
 
     // ========== 部门管理 ==========
 
@@ -53,6 +61,7 @@ public class DepartmentController {
     @OperationLog(operation = "分配部门权限")
     @PostMapping("/assignPermission")
     public Result assignPermission(@RequestBody Map<String, Object> body) {
+        checkAdmin();
         Object deptIdObj = body.get("deptId");
         if (deptIdObj == null) {
             return Result.error("部门ID不能为空");
@@ -66,5 +75,13 @@ public class DepartmentController {
     @GetMapping("/permissions")
     public Result<List<Long>> getDeptPermissions(Long deptId) {
         return Result.success(departmentService.getDeptPermissionIds(deptId));
+    }
+
+    private void checkAdmin() {
+        List<RoleDTO> roles = roleService.listUserRoles(UserContext.getUserId());
+        boolean isAdmin = roles.stream().anyMatch(r -> "admin".equals(r.getRoleName()));
+        if (!isAdmin) {
+            throw new ServiceException(SecurityConstant.NO_PERMISSION);
+        }
     }
 }

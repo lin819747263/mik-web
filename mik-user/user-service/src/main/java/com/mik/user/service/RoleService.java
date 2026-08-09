@@ -1,5 +1,6 @@
 package com.mik.user.service;
 
+import cn.hutool.core.util.StrUtil;
 import com.mik.core.exception.ServiceException;
 import com.mik.core.pojo.PageInput;
 import com.mik.core.pojo.PageResult;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,38 +40,43 @@ public class RoleService extends ServiceImpl<RoleMapper, Role> {
     @Resource
     UserRoleMapper userRoleMapper;
 
-    @Resource
-    RolePermissionMapper mapper;
-
     public PageResult<RoleDTO> listRolePage(RoleQuery query, PageInput page) {
         Page<Role> paginate = Page.of(page.getPageNum(), page.getPageSize());
-        QueryCondition condition =  QueryCondition.create(new QueryColumn("role_name"), "like", "%" + query.getName() + "%");
-        QueryWrapper wrapper = QueryWrapper.create().select().from("role").where(condition);
+        QueryWrapper wrapper = QueryWrapper.create().select().from("role");
+        if (StrUtil.isNotBlank(query.getName())) {
+            wrapper.and(new QueryColumn("role_name").like("%" + query.getName() + "%"));
+        }
 
-        Page<Role> userListDTOS = getMapper().paginateAs(paginate, wrapper, Role.class);
-        Page<RoleDTO> dtoPage = userListDTOS.map(x -> {
+        Page<Role> rolePage = getMapper().paginateAs(paginate, wrapper, Role.class);
+        Page<RoleDTO> dtoPage = rolePage.map(x -> {
             RoleDTO roleDTO = new RoleDTO();
             BeanUtils.copyProperties(x, roleDTO);
             return roleDTO;
         });
-        dtoPage.getRecords().forEach(x -> {
-            QueryCondition condition0 =  QueryCondition.create(new QueryColumn("role_id"), "=", x.getRoleId());
-            List<RolePermission> p = mapper.selectListByQuery(QueryWrapper.create().select().from("role_permission").where(condition0));
-            List<Long> ids = p.stream().map(RolePermission::getPId).collect(Collectors.toList());
-            x.setPermissions(ids);
-        });
+
+        // 批量查询所有角色的权限，避免 N+1 查询
+        List<Long> roleIds = dtoPage.getRecords().stream()
+                .map(RoleDTO::getRoleId).collect(Collectors.toList());
+        if (!roleIds.isEmpty()) {
+            List<RolePermission> allPerms = rolePermissionMapper.selectListByQuery(
+                    QueryWrapper.create().select().from("role_permission")
+                            .where(new QueryColumn("role_id").in(roleIds)));
+            Map<Long, List<Long>> permMap = allPerms.stream()
+                    .collect(Collectors.groupingBy(
+                            RolePermission::getRoleId,
+                            Collectors.mapping(RolePermission::getPId, Collectors.toList())));
+            dtoPage.getRecords().forEach(x ->
+                    x.setPermissions(permMap.getOrDefault(x.getRoleId(), new ArrayList<>())));
+        }
+
         return PageUtil.transform(dtoPage);
     }
 
     public void create(RoleCreateCommand command) {
-        if(command.getRoleId() == null){
-            Role role1 = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("role_name"), "=", command.getRoleName()));
-            if(role1 != null){
-                throw new ServiceException("角色名称已存在");
-            }
-        }else if(command.getRoleId() != null){
-            Role role1 = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("role_name"), "=", command.getRoleName()));
-            if(role1 != null && !role1.getRoleId().equals(command.getRoleId())){
+        Role existing = getMapper().selectOneByCondition(
+                QueryCondition.create(new QueryColumn("role_name"), "=", command.getRoleName()));
+        if (existing != null) {
+            if (command.getRoleId() == null || !existing.getRoleId().equals(command.getRoleId())) {
                 throw new ServiceException("角色名称已存在");
             }
         }
@@ -78,19 +85,19 @@ public class RoleService extends ServiceImpl<RoleMapper, Role> {
         BeanUtils.copyProperties(command, role);
         saveOrUpdate(role);
 
-        if(command.getRoleId() != null) {
-            mapper.deleteByCondition(QueryCondition.create(new QueryColumn("role_id"), "=", command.getRoleId()));
+        if (command.getRoleId() != null) {
+            rolePermissionMapper.deleteByCondition(
+                    QueryCondition.create(new QueryColumn("role_id"), "=", command.getRoleId()));
         }
 
         List<RolePermission> list = new ArrayList<>();
         for (String permission : command.getPIds().split(",")) {
             RolePermission rolePermission = new RolePermission();
             rolePermission.setRoleId(role.getRoleId());
-            rolePermission.setPId(Long.valueOf(permission));
+            rolePermission.setPId(Long.valueOf(permission.trim()));
             list.add(rolePermission);
         }
         rolePermissionMapper.insertBatch(list);
-
     }
 
     public List<RoleDTO> listUserRoles(Long userId) {
@@ -106,13 +113,15 @@ public class RoleService extends ServiceImpl<RoleMapper, Role> {
     }
 
     public void deleteRole(String ids) {
-        List<UserRole> userRole = userRoleMapper.selectListByQuery(QueryWrapper.create().select("*").from("user_role").where("role_id in (" + ids + ")"));
+        Set<Long> idSet = Arrays.stream(ids.split(",")).map(Long::valueOf).collect(Collectors.toSet());
+        List<UserRole> userRole = userRoleMapper.selectListByQuery(
+                QueryWrapper.create().select().from("user_role")
+                        .where(new QueryColumn("role_id").in(idSet)));
         if(!userRole.isEmpty()){
             throw new ServiceException("角色被用户引用，无法删除");
         }
-        Set<Long> set = Arrays.stream(ids.split(",")).map(Long::valueOf).collect(Collectors.toSet());
-        roleMapper.deleteBatchByIds(set);
-        set.forEach(roleId -> {
+        roleMapper.deleteBatchByIds(idSet);
+        idSet.forEach(roleId -> {
             rolePermissionMapper.deleteByCondition(QueryCondition.create(new QueryColumn("role_id"), "=", roleId));
         });
     }

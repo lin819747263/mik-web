@@ -1,9 +1,9 @@
 package com.mik.user.service;
 
 import cn.hutool.core.util.StrUtil;
+import com.mik.core.exception.ServiceException;
 import com.mik.core.pojo.PageInput;
 import com.mik.core.pojo.PageResult;
-import com.mik.core.pojo.Result;
 import com.mik.core.user.UserAuthService;
 import com.mik.core.user.UserInfo;
 import com.mik.security.UserContext;
@@ -11,7 +11,6 @@ import com.mik.user.dto.UserCreateDTO;
 import com.mik.user.dto.UserDTO;
 import com.mik.user.dto.UserListDTO;
 import com.mik.user.dto.UserQuery;
-import com.mik.user.entity.Permission;
 import com.mik.user.entity.User;
 import com.mik.user.entity.UserRole;
 import com.mik.user.mapper.UserMapper;
@@ -27,17 +26,13 @@ import com.mybatisflex.spring.service.impl.ServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,15 +44,10 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
     private UserRoleMapper userRoleMapper;
     @Autowired
     private DepartmentMapper departmentMapper;
-
     @Autowired
     private PasswordEncoder encoder;
-
-    @Value("${server.port}")
-    private Integer port;
-
     @Autowired
-    RedisTemplate redisTemplate;
+    private RedisTemplate<String, String> redisTemplate;
 
 
     public PageResult<UserListDTO> listByConditionPage(UserQuery query, PageInput page){
@@ -72,35 +62,53 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
         }
         QueryWrapper wrapper = QueryWrapper.create().select().from("user").where(condition);
 
-        Page<User> userListDTOS = userMapper.paginateAs(paginate, wrapper, User.class);
+        Page<User> userPage = userMapper.paginateAs(paginate, wrapper, User.class);
 
-        Page<UserListDTO> map = userListDTOS.map(x -> {
+        // 批量查询角色和部门，避免 N+1
+        List<Long> userIds = userPage.getRecords().stream()
+                .map(User::getUserId).collect(Collectors.toList());
+        Map<Long, List<Long>> roleMap = new HashMap<>();
+        if (!userIds.isEmpty()) {
+            List<UserRole> allRoles = userRoleMapper.selectListByQuery(
+                    QueryWrapper.create().select().from("user_role")
+                            .where(new QueryColumn("user_id").in(userIds)));
+            roleMap = allRoles.stream()
+                    .collect(Collectors.groupingBy(
+                            UserRole::getUserId,
+                            Collectors.mapping(UserRole::getRoleId, Collectors.toList())));
+        }
+
+        Set<Long> deptIds = userPage.getRecords().stream()
+                .map(User::getDeptId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, String> deptNameMap = new HashMap<>();
+        if (!deptIds.isEmpty()) {
+            List<Department> depts = departmentMapper.selectListByQuery(
+                    QueryWrapper.create().select().from("department")
+                            .where(new QueryColumn("dept_id").in(deptIds)));
+            depts.forEach(d -> deptNameMap.put(d.getDeptId(), d.getDeptName()));
+        }
+
+        Map<Long, List<Long>> finalRoleMap = roleMap;
+        Map<Long, String> finalDeptNameMap = deptNameMap;
+        Page<UserListDTO> dtoPage = userPage.map(x -> {
             UserListDTO userListDTO = new UserListDTO();
             BeanUtils.copyProperties(x, userListDTO);
-            List<UserRole> userRoles = userRoleMapper.selectListByCondition(QueryCondition.create(new QueryColumn("user_id"), "=", x.getUserId()));
-            List<Long> roleIds = userRoles.stream().map(UserRole::getRoleId).collect(Collectors.toList());
-            userListDTO.setRoleIds(roleIds);
-            // 查询部门名称
+            userListDTO.setRoleIds(finalRoleMap.getOrDefault(x.getUserId(), new ArrayList<>()));
             if (x.getDeptId() != null) {
-                Department dept = departmentMapper.selectOneById(x.getDeptId());
-                if (dept != null) {
-                    userListDTO.setDeptName(dept.getDeptName());
-                }
+                userListDTO.setDeptName(finalDeptNameMap.get(x.getDeptId()));
             }
             return userListDTO;
         });
 
-        return PageUtil.transform(map);
+        return PageUtil.transform(dtoPage);
     }
 
     public UserDTO getUserById(Long userId) {
         User user = userMapper.selectOneWithRelationsById(userId);
         UserDTO userDTO = new UserDTO();
         userDTO.setId(user.getUserId());
-        userDTO.setAge(18);
         userDTO.setEmail(user.getEmail());
         userDTO.setName(user.getUsername());
-        userDTO.setPort(port);
         return userDTO;
     }
 
@@ -113,15 +121,15 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
         if(user == null){
             return null;
         }
-        UserInfo userListDTO = new UserInfo();
-        BeanUtils.copyProperties(user, userListDTO);
-        return userListDTO;
+        UserInfo userInfo = new UserInfo();
+        BeanUtils.copyProperties(user, userInfo);
+        return userInfo;
     }
 
     public void createUser(UserCreateDTO createDTO) {
-        checkUsername(createDTO);
-        checkMobile(createDTO);
-        checkEmail(createDTO);
+        checkDuplicate("username", createDTO.getUsername(), createDTO.getUserId());
+        checkDuplicate("mobile", createDTO.getMobile(), createDTO.getUserId());
+        checkDuplicate("email", createDTO.getEmail(), createDTO.getUserId());
 
         User user = new User();
         if(createDTO.getUserId() != null){
@@ -142,60 +150,26 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
             Arrays.stream(createDTO.getRoleIds().split(",")).forEach(roleId -> {
                 UserRole userRole = new UserRole();
                 userRole.setUserId(user.getUserId());
-                userRole.setRoleId(Long.valueOf(roleId));
+                userRole.setRoleId(Long.valueOf(roleId.trim()));
                 userRoles.add(userRole);
             });
         }
         userRoleMapper.insertBatch(userRoles);
     }
 
-    private void checkEmail(UserCreateDTO createDTO) {
-        if(StringUtils.isBlank(createDTO.getEmail())){
+    /**
+     * 通用唯一性校验
+     */
+    private void checkDuplicate(String field, String value, Long userId) {
+        if (StringUtils.isBlank(value)) {
             return;
         }
-        if(createDTO.getUserId() == null){
-            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("email"), "=", createDTO.getEmail()));
-            if(user != null){
-                throw new RuntimeException("邮箱已存在");
-            }
-        }else{
-            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("email"), "=", createDTO.getEmail()));
-            if(user != null && !user.getUserId().equals(createDTO.getUserId())){
-                throw new RuntimeException("邮箱已存在");
-            }
-        }
-    }
-
-    private void checkMobile(UserCreateDTO createDTO) {
-        if(StringUtils.isBlank(createDTO.getMobile())){
-            return;
-        }
-        if(createDTO.getUserId() == null){
-            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("mobile"), "=", createDTO.getMobile()));
-            if(user != null){
-                throw new RuntimeException("手机号已存在");
-            }
-        }else{
-            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("mobile"), "=", createDTO.getMobile()));
-            if(user != null && !user.getUserId().equals(createDTO.getUserId())){
-                throw new RuntimeException("手机号已存在");
-            }
-        }
-    }
-
-    private void checkUsername(UserCreateDTO createDTO) {
-        if(StringUtils.isBlank(createDTO.getUsername())){
-            return;
-        }
-        if(createDTO.getUserId() == null){
-            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("username"), "=", createDTO.getUsername()));
-            if(user != null){
-                throw new RuntimeException("用户名已存在");
-            }
-        }else{
-            User user = getMapper().selectOneByCondition(QueryCondition.create(new QueryColumn("username"), "=", createDTO.getUsername()));
-            if(user != null && !user.getUserId().equals(createDTO.getUserId())){
-                throw new RuntimeException("用户名已存在");
+        User existing = getMapper().selectOneByCondition(
+                QueryCondition.create(new QueryColumn(field), "=", value));
+        if (existing != null) {
+            if (userId == null || !existing.getUserId().equals(userId)) {
+                String label = "username".equals(field) ? "用户名" : "mobile".equals(field) ? "手机号" : "邮箱";
+                throw new ServiceException(label + "已存在");
             }
         }
     }
@@ -217,7 +191,6 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
     }
 
     public void deleteKeysByPattern(String pattern) {
-        // 使用 SCAN 遍历匹配的 key
         ScanOptions options = ScanOptions.scanOptions().match(pattern).build();
         Cursor<String> cursor = redisTemplate.scan(options);
 
@@ -227,7 +200,6 @@ public class UserService extends ServiceImpl<UserMapper, User> implements UserAu
         }
         cursor.close();
 
-        // 批量删除
         if (!keys.isEmpty()) {
             redisTemplate.delete(keys);
         }
